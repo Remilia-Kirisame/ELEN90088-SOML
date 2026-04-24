@@ -1,6 +1,20 @@
-#macOS
+# macOS
 .DS_Store
 
-#Python
+# Virtual environment
+venv/
+.venv/
+.venv_soml/
+
+# Python
 __pycache__/
 *.pyc
+*.pyo
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# AI Agents
+CLAUDE.md
+GEMINI.md
+.claude/

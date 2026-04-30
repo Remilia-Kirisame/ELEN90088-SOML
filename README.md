@@ -2,7 +2,7 @@
 
 Coursework repository for [ELEN90088 System Optimisation and Machine Learning](https://handbook.unimelb.edu.au/subjects/elen90088) at the University of Melbourne (2026).
 
-This repository collects my solutions, supporting notes, and the final project for the subject. Weekly exercises live under `Exercises/`, and the project brief together with its starter materials live under `Project-Description/`.
+This repository collects my solutions, supporting notes, and the final project for the subject. Weekly exercises live under `Exercises/`, and the project brief together with its starter materials live under `Project-Description/`. `Project-LLM/` is the work-in-process folder.
 
 ## Subject Overview
 
@@ -33,6 +33,8 @@ ELEN90088 covers the mathematical foundations and practical tools of modern opti
 │   ├── SOML_LLM_project.ipynb          # Starter notebook (Option 2)
 │   ├── SOML_LLM_project_MacOS.yaml     # Conda env spec (macOS, optional)
 │   └── SOML_LLM_project_Windows.yaml   # Conda env spec (Windows / CUDA, optional)
+├── Project-LLM/
+│   ├── SOML_LLM_project.ipynb          # Starter notebook (Working on)
 ├── requirements.txt                    # pip requirements for the exercises
 └── README.md
 ```

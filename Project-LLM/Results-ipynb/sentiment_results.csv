@@ -1,0 +1,11 @@
+Review,Zero-Shot Label,Few-Shot Label
+"I was worried it would be terrible, but it actuall...",Positive,Positive
+"Oh great, another 'groundbreaking' superhero movie...",Negative,Negative
+The plot was non-existent and the acting was woode...,Negative,Negative
+"It’s not that the food was cold, it’s just that it...",Neutral,Neutral
+"If you enjoy watching paint dry, you'll love this ...",Negative,Negative
+"I've had better, but I've certainly had much, much...",Neutral,Neutral
+"Everything about this place is perfect, except for...",Negative,Negative
+I can't believe how much I didn't hate this....,Negative,Positive
+This is the best example of a terrible movie I hav...,Negative,Negative
+The only thing more disappointing than the ending ...,Negative,Negative

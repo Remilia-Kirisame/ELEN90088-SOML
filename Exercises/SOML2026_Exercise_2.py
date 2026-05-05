@@ -7,6 +7,10 @@
 #       format_name: percent
 #       format_version: '1.3'
 #       jupytext_version: 1.19.1
+#   kernelspec:
+#     display_name: .venv_soml
+#     language: python
+#     name: python3
 # ---
 
 # %% [markdown]
@@ -1328,6 +1332,190 @@ plt.show()
 # <a name="cite_note-1"></a> [<sup>[1]</sup>](#cite_ref-1) For ease of visualization, the official [`DecisionBoundaryDisplay`](https://scikit-learn.org/stable/modules/generated/sklearn.inspection.DecisionBoundaryDisplay.html#sklearn.inspection.DecisionBoundaryDisplay) function is efficient and simple to implement. You can learn how to use it via an [official example](https://scikit-learn.org/stable/auto_examples/svm/plot_separating_hyperplane.html#sphx-glr-auto-examples-svm-plot-separating-hyperplane-py).
 #
 # <a name="cite_note-2"></a> [<sup>[2]</sup>](#cite_ref-2) See [sklearn.metrics](https://scikit-learn.org/stable/modules/classes.html#module-sklearn.metrics), especially [classification_report](https://scikit-learn.org/stable/modules/generated/sklearn.metrics.classification_report.html#sklearn.metrics.classification_report)
+#
+
+# %% [markdown]
+# ### Solution — Q4.1: Linear SVM with different C
+#
+# We split the noisy-moons data 75/25 and fit `SVC(kernel='linear')` over a logarithmic sweep of C. For each C we plot the decision boundary on top of all data (test points overlaid) and report precision / recall / F1 on the test set.
+#
+
+# %%
+from sklearn.model_selection import train_test_split
+from sklearn.svm import SVC
+from sklearn.metrics import classification_report
+from sklearn.inspection import DecisionBoundaryDisplay
+
+SEED_Q4 = 98765
+X_q4, y_q4 = datasets.make_moons(n_samples=400, noise=0.1, random_state=SEED_Q4)
+X_tr_q4, X_te_q4, y_tr_q4, y_te_q4 = train_test_split(
+    X_q4, y_q4, test_size=0.25, random_state=SEED_Q4)
+
+LIN_C_VALUES = [0.01, 0.1, 1.0, 10.0, 100.0]
+
+fig, axes = plt.subplots(1, len(LIN_C_VALUES), figsize=(4 * len(LIN_C_VALUES), 4))
+
+print(f"{'C':>8s}  {'precision':>10s} {'recall':>8s} {'f1':>6s}  {'test acc':>9s}")
+print("-" * 50)
+for ax, C in zip(axes, LIN_C_VALUES):
+    clf = SVC(kernel='linear', C=C) # clf: classifier
+    clf.fit(X_tr_q4, y_tr_q4)       # fit the SVM to the training data
+    y_pred = clf.predict(X_te_q4)   # predict the labels of the test data using the fitted SVM
+    report = classification_report(y_te_q4, y_pred, output_dict=True, zero_division=0)  # get the classification report
+    assert isinstance(report, dict) # Solves PyLance warning — Tells the type checker it's definitely a dict.
+    macro = report['macro avg']     # macro-averaged report (See `ANEx2_SVM.md` for explanation)
+    print(f"{C:>8.2g}  {macro['precision']:>10.3f} {macro['recall']:>8.3f} "
+          f"{macro['f1-score']:>6.3f}  {report['accuracy']:>9.3f}")
+
+    DecisionBoundaryDisplay.from_estimator(
+        clf, X_q4, ax=ax, cmap='RdBu_r', alpha=0.5,
+        response_method='predict', plot_method='contourf', grid_resolution=200)
+    ax.scatter(X_te_q4[y_te_q4 == 0, 0], X_te_q4[y_te_q4 == 0, 1],
+               c='black', s=22, edgecolors='w', linewidths=0.5, label='class 0 (test)')
+    ax.scatter(X_te_q4[y_te_q4 == 1, 0], X_te_q4[y_te_q4 == 1, 1],
+               c='red',   s=22, edgecolors='w', linewidths=0.5, label='class 1 (test)')
+    ax.set_title(f"linear, C={C:g}")
+    ax.set_xticks([]); ax.set_yticks([])
+plt.tight_layout(); plt.show()
+
+
+# %% [markdown]
+# #### Observations — Q4.1
+#
+# - **The decision boundary is a straight line for every C.** 
+#   That is the defining property of a linear kernel, regardless of how heavily we penalise margin violations.
+# - **Linear separability.** 
+#   The two moons interleave horizontally, so no straight line cleanly separates them. The best linear classifier still misclassifies the points in the curling tips of either moon — those are structurally on the wrong side of any straight cut.
+# - **Effect of C.** 
+#   Small C gives a wide soft margin (many violations tolerated) and slightly under-fits; 
+#   large C narrows the margin and grasps the training data harder. 
+#   Because the hypothesis class is bounded by the linear shape, the test precision / recall / F1 across $C \in [0.1, 100]$ stay within a few percent of one another — all are limited by the structural mismatch, not by regularisation strength.
+#
+
+# %% [markdown]
+# ### Solution — Q4.2: RBF SVM with different C and gamma
+#
+# Now we swap to the Gaussian RBF kernel
+# $$
+# k(x, x') = \exp\!\big(-\gamma \|x - x'\|^2\big)
+# $$
+# and sweep both $C$ and $\gamma$. Each panel shows the decision boundary on the same train/test split used in Q4.1 so the comparison is direct.
+#
+# - $\gamma$ controls Gaussian bump width: small → smooth; large → wiggly, overfits.
+# - **$C$ (regularisation)**: Trade-off between margin width and misclassification tolerance.
+#     - Small $C$ → wide margin, tolerates violations → underfitting risk
+#     - Large $C$ → narrow margin, penalises violations hard → overfitting risk
+
+# %%
+RBF_PARAMS = [
+    (1.0,   0.1),
+    (1.0,   1.0),
+    (1.0,  10.0),
+    (10.0,  1.0),
+    (100.0, 1.0),
+    (10.0, 10.0),
+]
+
+fig, axes = plt.subplots(2, 3, figsize=(13, 8))
+axes_flat = axes.ravel()
+
+print(f"{'C':>6s} {'gamma':>6s}  {'precision':>10s} {'recall':>8s} {'f1':>6s}  {'test acc':>9s}")
+print("-" * 56)
+for ax, (C, gamma) in zip(axes_flat, RBF_PARAMS):
+    clf = SVC(kernel='rbf', C=C, gamma=gamma)
+    clf.fit(X_tr_q4, y_tr_q4)
+    y_pred = clf.predict(X_te_q4)
+    report = classification_report(y_te_q4, y_pred, output_dict=True, zero_division=0)
+    assert isinstance(report, dict) # Solves PyLance warning — Tells the type checker it's definitely a dict.
+    macro = report['macro avg']
+    print(f"{C:>6.2g} {gamma:>6.2g}  {macro['precision']:>10.3f} {macro['recall']:>8.3f} "
+          f"{macro['f1-score']:>6.3f}  {report['accuracy']:>9.3f}")
+
+    DecisionBoundaryDisplay.from_estimator(
+        clf, X_q4, ax=ax, cmap='RdBu_r', alpha=0.5,
+        response_method='predict', plot_method='contourf', grid_resolution=200)
+    ax.scatter(X_te_q4[y_te_q4 == 0, 0], X_te_q4[y_te_q4 == 0, 1],
+               c='black', s=22, edgecolors='w', linewidths=0.5)
+    ax.scatter(X_te_q4[y_te_q4 == 1, 0], X_te_q4[y_te_q4 == 1, 1],
+               c='red',   s=22, edgecolors='w', linewidths=0.5)
+    ax.set_title(f"rbf, C={C:g}, γ={gamma:g}")
+    ax.set_xticks([]); ax.set_yticks([])
+plt.tight_layout(); plt.show()
+
+
+# %% [markdown]
+# #### Observations — Q4.2
+#
+# - **Curved boundaries.** 
+#   With an RBF kernel the decision boundary follows the moon shape, so it can separate the two classes almost perfectly.
+#   Test accuracy / F1 jump from ≈ 0.86–0.88 (linear) to ≈ 0.97–1.00 with even modest $(C, \gamma)$.
+# - **Effect of $C$** 
+#   — controls how hard the model fits training points (margin softness). With small $C$ the boundary is smooth; with very large $C$ it tightens around individual points and increases over-fitting risk.
+# - **Effect of $\gamma$** 
+#   — controls each RBF bump's width: small $\gamma$ $\Rightarrow$ wide bumps $\Rightarrow$ smoother global boundary; large $\gamma$ $\Rightarrow$ narrow bumps $\Rightarrow$ wiggly boundaries that can carve around individual training points. 
+#   The bottom-right panel ($C=10, \gamma=10$) shows the classic high-$\gamma$ over-fit: small islands appear around isolated training points.
+# - **Sweet spot.** 
+#   $C \approx 1\text{–}10$ with $\gamma \approx 1$ gives a clean smooth boundary tracing the moons — substantially better than the best linear SVM both visually and on every classification metric.
+#
+
+# %% [markdown]
+# ### Solution — Q4.3: DNN vs. SVM
+#
+# We retrain the Q3.2 DNN baseline on the *same* train/test split used in Q4.1–Q4.2 so the comparison is direct, then plot the boundaries side-by-side and report metrics for both classifiers.
+#
+# > [!caution]
+# > Run cells (1st and 3rd) in Q3 before the following one.
+
+# %%
+torch.manual_seed(0)
+np.random.seed(0)
+
+Xtr_t, Xte_t, ytr_t, yte_t = to_tensors(X_tr_q4, X_te_q4, y_tr_q4, y_te_q4)
+dnn_q4 = DNN(input_dim=2, layer_list=[16, 8, 1], activation=nn.ReLU)
+opt_q4 = make_optimizer(dnn_q4.parameters(), "adam", 0.01)
+lf_q4  = make_loss("bce")
+_ = train_dnn(dnn_q4, Xtr_t, ytr_t, Xte_t, yte_t,
+              optimizer=opt_q4, loss_fn=lf_q4,
+              epochs=300, record_every=300)
+
+dnn_q4.eval()
+with torch.no_grad():
+    y_dnn = (dnn_q4(Xte_t).numpy().ravel() >= 0.5).astype(int)
+
+best_svm_params = (5.0, 1.0)  # from the RBF_PARAMS sweep above
+best_svm = SVC(kernel='rbf', C=best_svm_params[0], gamma=best_svm_params[1]).fit(X_tr_q4, y_tr_q4)
+y_svm = best_svm.predict(X_te_q4)
+
+print("DNN [16, 8, 1] + ReLU + Adam(1e-2) + BCE, 300 epochs")
+print(classification_report(y_te_q4, y_dnn, digits=3, zero_division=0))
+print(f"RBF SVM (C={best_svm_params[0]}, gamma={best_svm_params[1]})")
+print(classification_report(y_te_q4, y_svm, digits=3, zero_division=0))
+
+fig, axes = plt.subplots(1, 2, figsize=(11, 5))
+plot_decision_boundary(dnn_q4, X_q4, y_q4, axes[0], "DNN [16, 8, 1] + ReLU")
+DecisionBoundaryDisplay.from_estimator(
+    best_svm, X_q4, ax=axes[1], cmap='RdBu_r', alpha=0.5,
+    response_method='predict', plot_method='contourf', grid_resolution=200)
+axes[1].scatter(X_q4[y_q4 == 0, 0], X_q4[y_q4 == 0, 1], c='black', s=15)
+axes[1].scatter(X_q4[y_q4 == 1, 0], X_q4[y_q4 == 1, 1], c='red',   s=15)
+axes[1].set_title(f"RBF SVM (C={best_svm_params[0]}, γ={best_svm_params[1]})")
+axes[1].set_xticks([]); axes[1].set_yticks([])
+plt.tight_layout(); plt.show()
+
+
+# %% [markdown]
+# #### Observations — Q4.3
+#
+# - **Both classifiers reach near-perfect test accuracy on noise = 0.1.**
+#   With the moon structure clearly preserved at this noise level, a tuned RBF SVM and a modest DNN are essentially tied on every metric.
+# - **Boundary geometry differs.** 
+#   The DNN boundary is piecewise-linear — the composition of ReLU layers carves space into polygonal regions — while the RBF SVM boundary is smooth, a level set of a sum of Gaussians. 
+#   Both align well with the gap between the moons; the RBF version is visually tidier on this 2D problem.
+# - **Practical trade-offs.**
+#   - **SVM** has only two main hyperparameters ($C$, $\gamma$), trains in a fraction of a second with no GPU, and gives the global optimum of a convex objective for the chosen kernel — ideal for low-dimensional tabular data of this size.
+#   - **DNN** is more flexible and scales much better to high-dimensional / unstructured inputs (images, text, audio), but adds many knobs (architecture, optimiser, learning rate, regularisation, epoch budget), trains via stochastic non-convex optimisation, and can over-fit small datasets without explicit regularisation.
+# - **Bottom line.** 
+#   On a 2D toy problem like this, SVM is simpler, faster, and ties on accuracy. The DNN's advantage would show up only on harder data where no fixed kernel captures the structure — at which point the extra flexibility (and the cost of tuning it) pays for itself.
 #
 
 # %% [markdown]

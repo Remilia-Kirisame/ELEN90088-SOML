@@ -1542,6 +1542,41 @@ plt.tight_layout(); plt.show()
 # 2. Let's look at a simple toy example. Suppose our encoder outputs a scalar $\mu = 2$ and $\sigma = 1$. We sample a value $\epsilon = 0.5$ from the standard normal distribution $\mathcal{N}(0, 1)$. Our loss function is purely a toy reconstruction loss defined as $L = (z - 5)^2$. Use the reparameterization trick to calculate the gradient of the loss with respect to both $\mu$ and $\sigma$.
 
 # %% [markdown]
+# **Solution to Part A:**
+#
+# **A.1 — Why direct sampling breaks back-propagation, and how the reparameterization trick fixes it.**
+#
+# When we draw $z\sim\mathcal{N}(\mu,\sigma^2)$ directly inside the forward pass, the value of $z$ is produced by an external random number generator. The map $(\mu,\sigma)\mapsto z$ is then a *stochastic node*, not a deterministic function: an individual sample $z$ has no closed-form algebraic dependence on $(\mu,\sigma)$ that we can differentiate. Although the moments satisfy $\mathbb{E}[z]=\mu$ and $\text{Var}[z]=\sigma^2$, a single realization is not a differentiable function of the encoder parameters, so $\partial z/\partial\mu$ and $\partial z/\partial\sigma$ are undefined and autograd has no gradient path from the loss back to the encoder. The encoder therefore receives no learning signal.
+#
+# The reparameterization trick rewrites the sampling step as
+# $$
+# z = \mu + \sigma\odot\epsilon,\qquad \epsilon\sim\mathcal{N}(\mathbf{0},\mathbf{I}_d).
+# $$
+# All randomness now lives in $\epsilon$, which is independent of the encoder parameters and is treated as an external constant during the backward pass. Conditioned on $\epsilon$, $z$ is a deterministic, differentiable function of $\mu$ and $\sigma$ with
+# $$
+# \frac{\partial z}{\partial \mu} = 1,\qquad \frac{\partial z}{\partial \sigma} = \epsilon.
+# $$
+# The gradient of $L(z)$ now flows through $z$ to $(\mu,\sigma)$ — and from there into the encoder weights — by ordinary chain-rule back-propagation, while the latent code retains its stochastic distribution.
+#
+# **A.2 — Toy gradient computation.**
+#
+# With $\mu=2$, $\sigma=1$, $\epsilon=0.5$:
+# $$
+# z = \mu + \sigma\epsilon = 2 + 1\cdot 0.5 = 2.5,\qquad L = (z-5)^2 = (-2.5)^2 = 6.25.
+# $$
+# Differentiating $L$ through $z$:
+# $$
+# \frac{\partial L}{\partial z} = 2(z-5) = 2\cdot(-2.5) = -5.
+# $$
+# Applying the chain rule with $\partial z/\partial\mu = 1$ and $\partial z/\partial\sigma = \epsilon = 0.5$:
+# $$
+# \frac{\partial L}{\partial \mu} = \frac{\partial L}{\partial z}\cdot\frac{\partial z}{\partial \mu} = -5\cdot 1 = -5,
+# $$
+# $$
+# \frac{\partial L}{\partial \sigma} = \frac{\partial L}{\partial z}\cdot\frac{\partial z}{\partial \sigma} = -5\cdot 0.5 = -2.5.
+# $$
+
+# %% [markdown]
 # ### Part B: Designing a Convolutional VAE for CIFAR-10 (5 Points)
 # **Questions:**
 # Using PyTorch, implement a `ConvVAE` class designed for the CIFAR-10 dataset (where inputs are 3 channels, 32x32 pixels). To avoid dimension mismatch errors, you can use the following specific architecture:
@@ -1562,6 +1597,99 @@ plt.tight_layout(); plt.show()
 # 5. **Forward Pass:** A `forward` method seamlessly connecting the encoder, reparameterization, and decoder.
 
 # %% [markdown]
+# > [!Caution] Safe to "Run ALL"
+# > **Run-all workflow for Question 5.** This section is safe to "Run All" repeatedly — it caches both the dataset and the trained models, so nothing expensive is redone unless you ask for it.
+# >
+# > **Two independent caching checks happen automatically:**
+# >
+# > 1. **CIFAR-10 data** is downloaded to ``DATA_ROOT`` only if it isn't already there. ``download=True`` means "download if missing", not "download every time" — leave it on.
+# > 2. **Trained ConvVAE weights** are saved to ``CKPT_DIR/convvae_d{d}.pt`` after the first training run. On subsequent runs the helper ``get_or_train_vae`` loads the checkpoint and skips training. Both Part C.4 ($d=128$) and the Part D sweep go through the same helper, so the $d=128$ model is trained at most once.
+# >
+# > **Expected wall-clock:**
+# >
+# > * **First run:** trains 4 ConvVAEs ($d \in \{16, 64, 128, 256\}$) for 25 epochs each — roughly 5–15 minutes on MacBook. Total checkpoint size on disk is about 6.5 MB.
+# > * **Subsequent runs (after a kernel restart):** loads the 4 checkpoints in seconds and proceeds straight to evaluation and plotting.
+# >
+# > **Tweakable paths and hyperparameters** are grouped at the top of the setup cell below: ``DATA_ROOT``, ``CKPT_DIR``, ``BATCH_SIZE``, ``EPOCHS``, ``LR``. Both paths are relative to ``Exercises/`` (the notebook's working directory), so the defaults resolve to ``Exercises/Ex2-data/`` and ``Exercises/Ex2-checkpoints/``.
+# >
+# > **Forcing a retrain** (only needed if you change the model architecture or hyperparameters): delete the corresponding ``.pt`` file, e.g. ``rm Exercises/checkpoints/convvae_d128.pt`` for one model, or ``rm -rf Exercises/checkpoints/`` for all of them. No code edits required.
+
+# %%
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+
+class ConvVAE(nn.Module):
+    def __init__(self, latent_dim=128):
+        '''
+        Convolutional VAE for CIFAR-10 (3 x 32 x 32 inputs).
+
+        Encoder: three Conv2d layers (kernel=3, stride=2, padding=1) with ReLU, producing a 64 x 4 x 4 feature map. 
+        Two Linear heads map the flattened features to ``mu`` and ``log_var``.
+
+        Decoder: a Linear layer maps the latent code back to a 64 x 4 x 4 feature map, 
+        followed by three ConvTranspose2d layers (kernel=3, stride=2, padding=1, output_padding=1) with ReLU and a final Sigmoid,
+        recovering a 3 x 32 x 32 image with pixel values in [0, 1].
+        '''
+        super().__init__()
+        self.latent_dim = latent_dim
+
+        self.enc_conv1 = nn.Conv2d(3, 16, kernel_size=3, stride=2, padding=1)
+        self.enc_conv2 = nn.Conv2d(16, 32, kernel_size=3, stride=2, padding=1)
+        self.enc_conv3 = nn.Conv2d(32, 64, kernel_size=3, stride=2, padding=1)
+
+        self.flatten_dim = 64 * 4 * 4
+        self.fc_mu = nn.Linear(self.flatten_dim, latent_dim)
+        self.fc_log_var = nn.Linear(self.flatten_dim, latent_dim)
+
+        self.fc_dec = nn.Linear(latent_dim, self.flatten_dim)
+        self.dec_deconv1 = nn.ConvTranspose2d(64, 32, kernel_size=3, stride=2,
+                                              padding=1, output_padding=1)
+        self.dec_deconv2 = nn.ConvTranspose2d(32, 16, kernel_size=3, stride=2,
+                                              padding=1, output_padding=1)
+        self.dec_deconv3 = nn.ConvTranspose2d(16, 3, kernel_size=3, stride=2,
+                                              padding=1, output_padding=1)
+
+    def encode(self, x):
+        h = F.relu(self.enc_conv1(x))
+        h = F.relu(self.enc_conv2(h))
+        h = F.relu(self.enc_conv3(h))
+        h = h.flatten(start_dim=1)
+        return self.fc_mu(h), self.fc_log_var(h)
+
+    def reparameterize(self, mu, log_var):
+        std = torch.exp(0.5 * log_var)
+        eps = torch.randn_like(std)
+        return mu + std * eps
+
+    def decode(self, z):
+        h = F.relu(self.fc_dec(z))
+        h = h.view(-1, 64, 4, 4)
+        h = F.relu(self.dec_deconv1(h))
+        h = F.relu(self.dec_deconv2(h))
+        h = torch.sigmoid(self.dec_deconv3(h))
+        return h
+
+    def forward(self, x):
+        mu, log_var = self.encode(x)
+        z = self.reparameterize(mu, log_var)
+        recon = self.decode(z)
+        return recon, mu, log_var
+
+
+# %% [markdown]
+# #### Q. Why three conv layers with `kernel=3, stride=2, padding=1`
+#
+# That exact combination is the standard "halve the spatial size" block. The output size formula (`k=kernel=3, s=stride=2, p=padding=1`) gives
+# $$
+# H_\text{out} = \left\lfloor \frac{H + 2p - k}{s} \right\rfloor + 1 = \left\lfloor \frac{H + 2 - 3}{2} \right\rfloor + 1 = \frac{H}{2}.
+# $$
+# So three of them take $32\!\to\!16\!\to\!8\!\to\!4$. Two would leave you at $8\times 8$ (flatten = 2048, large FC head); four would crush you to $2\times 2$ and throw away too much spatial structure. Three is the sweet spot for $32\times 32$ inputs.
+#
+# For more discussion, refer [[ANEX2_VAE-2.md]]
+
+# %% [markdown]
 # ### Part C: The ELBO Loss and Training Loop (7 Points)
 #
 # **Questions:**
@@ -1569,12 +1697,40 @@ plt.tight_layout(); plt.show()
 # $$
 # D_{KL}(q(z|x)\|p(z)) = \int_{\mathcal{Z}}q(z|x)\log\frac{q(z|x)}{p(z)}dz.
 # $$
-# Note: For a multi-variate Gaussian distribution, if the dimensions are independent, the total KL divergence is simply the sum of Kl divergence for each dimension.
+# - Note: For a multi-variate Gaussian distribution, if the dimensions are independent, the total KL divergence is simply the sum of Kl divergence for each dimension.
+#
 # 2. Write a Python function `vae_loss(recon_x, x, mu, log_var)` that computes the negative ELBO (Reconstruction Loss + KL Divergence). Use MSE with `reduction='sum'` for the reconstruction part.
+#
 # 3. Write a Python function `train(model, train_loader, optimizer, epochs)` that trains the model in a training loop for a given number of epochs, and prints out the training loss for each epoch.
+#
 # 4. Write a Python script that execute the training process:
 #     * **Data Pre-processing:** Ensure you correctly process the image so they are compatible with your decoder's output.
 #     * **Training:** Train the model for **25 epochs** using learning rate $0.001$. Set the latent space dimension $d=128$. Print the average loss for each epoch.
+
+# %% [markdown]
+# **Solution to Part C.1 — KL divergence between $\mathcal{N}(\mu,\sigma^2)$ and $\mathcal{N}(0,1)$.**
+#
+# For the univariate case, the log-densities are
+# $$
+# \log q(z|x) = -\tfrac{1}{2}\log(2\pi\sigma^2) - \frac{(z-\mu)^2}{2\sigma^2},\qquad \log p(z) = -\tfrac{1}{2}\log(2\pi) - \frac{z^2}{2},
+# $$
+#
+# so
+# $$
+# \log\frac{q(z|x)}{p(z)} = -\tfrac{1}{2}\log\sigma^2 - \frac{(z-\mu)^2}{2\sigma^2} + \frac{z^2}{2}.
+# $$
+#
+# Taking the expectation under $q$ and using $\mathbb{E}_q[(z-\mu)^2] = \sigma^2$ and $\mathbb{E}_q[z^2] = \sigma^2 + \mu^2$:
+# $$
+# D_{KL}(q\,\|\,p) = -\tfrac{1}{2}\log\sigma^2 - \tfrac{1}{2} + \tfrac{1}{2}(\sigma^2 + \mu^2) = -\tfrac{1}{2}\!\left(1 + \log\sigma^2 - \mu^2 - \sigma^2\right).
+# $$
+#
+# For a $d$-dimensional diagonal Gaussian $q(z|x) = \mathcal{N}(\mu,\text{diag}(\sigma^2))$ against $p(z) = \mathcal{N}(\mathbf{0},\mathbf{I}_d)$, the dimensions are independent, so
+# $$
+# D_{KL}(q(z|x)\,\|\,p(z)) = -\tfrac{1}{2}\sum_{i=1}^{d}\!\left(1 + \log\sigma_i^2 - \mu_i^2 - \sigma_i^2\right).
+# $$
+#
+# Writing $\texttt{log\_var}_i = \log\sigma_i^2$, this is exactly the closed-form expression used inside ``vae_loss`` below.
 
 # %%
 def vae_loss(recon_x, x, mu, log_var):
@@ -1589,7 +1745,9 @@ def vae_loss(recon_x, x, mu, log_var):
     Returns:
         loss: the combined reconstruction and KL divergence loss
     '''
-    pass
+    recon_loss = F.mse_loss(recon_x, x, reduction='sum')
+    kl_div = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp())
+    return recon_loss + kl_div
 
 
 # %%
@@ -1603,17 +1761,113 @@ def train(model, train_loader, lr, epochs, device):
         epochs: number of training epochs
         device: device to run the training on (e.g., 'cuda' or 'cpu')
     '''
-    pass
+    model.to(device)
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+    n_samples = len(train_loader.dataset)
+    for epoch in range(1, epochs + 1):
+        model.train()
+        running_loss = 0.0
+        for x, _ in train_loader:
+            x = x.to(device)
+            optimizer.zero_grad()
+            recon_x, mu, log_var = model(x)
+            loss = vae_loss(recon_x, x, mu, log_var)
+            loss.backward()
+            optimizer.step()
+            running_loss += loss.item()
+        avg_loss = running_loss / n_samples
+        print(f"Epoch {epoch:3d}/{epochs} | avg loss per image: {avg_loss:.4f}")
+
+
+# %% [markdown]
+# **Part C.4 — Training script (with data + checkpoint caching).**
+#
+# We use ``torchvision.datasets.CIFAR10`` and apply only ``ToTensor()`` (no mean/std normalization), which scales pixels to $[0,1]$ — the same range as the decoder's ``Sigmoid`` output, so MSE compares like-for-like. Train for 25 epochs at $\text{lr}=10^{-3}$ with $d=128$.
+#
+# Re-running the notebook should not redo expensive work. We perform two independent caching checks:
+#
+# 1. **Data check.** ``torchvision.datasets.CIFAR10(root=DATA_ROOT, download=True)`` is already idempotent — it skips the download if the dataset files are already under ``DATA_ROOT``.
+# 2. **Checkpoint check.** For each ``latent_dim`` we look for ``CKPT_DIR/convvae_d{d}.pt``. If the file exists, we ``load_state_dict`` and skip training entirely; otherwise we train from scratch and ``torch.save`` the resulting weights. Both Part C.4 ($d=128$) and the Part D sweep go through the same helper, so the $d=128$ model is only ever trained once.
+
+# %%
+import os
+import torchvision
+import torchvision.transforms as transforms
+from torch.utils.data import DataLoader
+
+# ----- Paths and hyperparameters (tweak here) ---------------------------------
+DATA_ROOT = "Ex2-data"        # CIFAR-10 download/cache directory
+CKPT_DIR = "Ex2-checkpoints"     # where trained ConvVAE weights are saved/loaded
+BATCH_SIZE = 128
+EPOCHS = 25
+LR = 1e-3
+# ------------------------------------------------------------------------------
+
+os.makedirs(CKPT_DIR, exist_ok=True)
+
+# Data: pixels in [0, 1] to match Sigmoid output. download=True is a no-op if
+# DATA_ROOT already contains the CIFAR-10 batches.
+cifar_transform = transforms.ToTensor()
+train_set = torchvision.datasets.CIFAR10(
+    root=DATA_ROOT, train=True, download=True, transform=cifar_transform,
+) 
+# `download=True` is a no-op if the dataset is already present in `DATA_ROOT`. i.e. "download if data missing, otherwise load from disk."
+test_set = torchvision.datasets.CIFAR10(
+    root=DATA_ROOT, train=False, download=True, transform=cifar_transform,
+)
+train_loader = DataLoader(train_set, batch_size=BATCH_SIZE, shuffle=True, num_workers=0)
+test_loader = DataLoader(test_set, batch_size=BATCH_SIZE, shuffle=False, num_workers=0)
+
+# Device auto-pick.
+if torch.cuda.is_available():
+    device = torch.device("cuda")
+elif torch.backends.mps.is_available():
+    device = torch.device("mps")
+else:
+    device = torch.device("cpu")
+print(f"Using device: {device}")
+
+
+def get_or_train_vae(latent_dim):
+    '''
+    Load a ConvVAE checkpoint from ``CKPT_DIR`` if it exists; otherwise train
+    a fresh model with the global hyperparameters and save its weights.
+    '''
+    ckpt_path = os.path.join(CKPT_DIR, f"convvae_d{latent_dim}.pt")
+    model = ConvVAE(latent_dim=latent_dim)
+    if os.path.exists(ckpt_path):
+        print(f"[load] {ckpt_path} -- skipping training")
+        model.load_state_dict(torch.load(ckpt_path, map_location=device))
+        model.to(device)
+    else:
+        print(f"[train] no checkpoint at {ckpt_path} -- training from scratch")
+        torch.manual_seed(0)
+        train(model, train_loader, lr=LR, epochs=EPOCHS, device=device)
+        torch.save(model.state_dict(), ckpt_path)
+        print(f"[save] wrote {ckpt_path}")
+    return model
+
+
+# Train (or load) the d=128 model required by Part C.4. The same checkpoint is
+# reused by the Part D sweep below, so no redundant training happens.
+vae_d128 = get_or_train_vae(latent_dim=128)
 
 
 # %% [markdown]
 # ### Part D: Investigating the Compression vs. Performance Trade-off (5 Points)
+#
 # **Questions:**
+#
 # The VAE maps high-dimensional CIFAR-10 images (3x32x32 = 3072 dimensions) into a smaller latent representation. The `latent_dim` size controls the "compression rate."
+#
 # Write a script to investigate how the size of this bottleneck affects the model's ability to reconstruct images.
+#
 # 1. Write a Python function `test()` to evaluate the average reconstruction loss **(only MSE loss)** on the CIFAR-10 **test set**.
+#
 # 2. Instantiate and train three completely separate VAE models using `latent_dim` values of 16, 64, 128, and 256. Train each model for 25 epochs. Use the `test` function to evaluate performance for each trained model. For each trained model, select one image from the test dataset, plot is togehter with its corresponding reconstructed image.
+#
 # 3. Calculate the compression ratio for each latent dimension (the ratio between the size of latent representation $z$ and the input image $x$). Assume an original CIFAR-10 image is 32x32 pixels, 3 channels, where each pixel is an integer value ranging in [0,255]. Assume the latent representation $z$ uses 32-bit floats. Plot the test loss (y-axis) versus the compression ratio (x-axis) using `matplotlib`.
+#
 # 4. Provide a brief discussion on the observed trade-off between the compression rate and reconstruction performance. Why does the loss behave this way?
 
 # %%
@@ -1627,4 +1881,111 @@ def test(model, test_loader, device):
     Returns:
         average_loss: the average loss on the test dataset
     '''
-    pass
+    model.to(device)
+    model.eval()
+    total_mse = 0.0
+    n_samples = len(test_loader.dataset)
+    with torch.no_grad():
+        for x, _ in test_loader:
+            x = x.to(device)
+            recon_x, _, _ = model(x)
+            total_mse += F.mse_loss(recon_x, x, reduction='sum').item()
+    return total_mse / n_samples
+
+
+# %% [markdown]
+# **Part D.2 — Train one VAE per ``latent_dim`` and visualize reconstructions.**
+#
+# We train four independent ``ConvVAE`` models with $d\in\{16,64,128,256\}$ for 25 epochs each. After training, we (i) evaluate the average MSE on the held-out test set with ``test()``, and (ii) reconstruct one fixed test image to compare against the original.
+
+# %%
+LATENT_DIMS = [16, 64, 128, 256]
+
+# Pick a single fixed test image once so all models reconstruct the same input.
+sample_img, _ = test_set[0]
+sample_batch = sample_img.unsqueeze(0).to(device)
+
+trained_models = {}
+test_losses = {}
+reconstructions = {}
+
+for d in LATENT_DIMS:
+    print(f"\n=== ConvVAE with latent_dim = {d} ===")
+    model = get_or_train_vae(d)
+
+    avg_test_loss = test(model, test_loader, device)
+    print(f"latent_dim={d}: average test MSE per image = {avg_test_loss:.4f}")
+
+    model.eval()
+    with torch.no_grad():
+        recon, _, _ = model(sample_batch)
+
+    trained_models[d] = model
+    test_losses[d] = avg_test_loss
+    reconstructions[d] = recon.squeeze(0).cpu()
+
+# %%
+# Plot the chosen test image alongside each model's reconstruction.
+import matplotlib.pyplot as plt
+fig, axes = plt.subplots(1, len(LATENT_DIMS) + 1, figsize=(3 * (len(LATENT_DIMS) + 1), 3))
+
+axes[0].imshow(sample_img.permute(1, 2, 0).numpy())
+axes[0].set_title("Original")
+axes[0].axis("off")
+
+for ax, d in zip(axes[1:], LATENT_DIMS):
+    ax.imshow(reconstructions[d].permute(1, 2, 0).numpy())
+    ax.set_title(f"d = {d}\nMSE = {test_losses[d]:.2f}")
+    ax.axis("off")
+
+plt.tight_layout()
+plt.show()
+
+
+# %% [markdown]
+# **Part D.3 — Compression ratio and trade-off plot.**
+#
+# A CIFAR-10 image stored as 8-bit-per-channel pixels occupies $32\times 32\times 3\times 8 = 24{,}576$ bits. The latent code uses 32-bit floats, so its size is $32\,d$ bits. The compression ratio is therefore
+# $$
+# \rho(d) = \frac{32\,d}{24{,}576} = \frac{d}{768}.
+# $$
+# Smaller $\rho$ means more aggressive compression.
+
+# %%
+ORIG_BITS = 32 * 32 * 3 * 8     # 24,576 bits per CIFAR-10 image at 8 bits/channel
+LATENT_BITS_PER_DIM = 32        # 32-bit floats
+
+compression_ratios = [LATENT_BITS_PER_DIM * d / ORIG_BITS for d in LATENT_DIMS]
+losses_in_order = [test_losses[d] for d in LATENT_DIMS]
+
+print("latent_dim |  compression ratio  |  test MSE per image")
+for d, r, l in zip(LATENT_DIMS, compression_ratios, losses_in_order):
+    print(f"{d:>10d} | {r:>18.4f}  | {l:>18.4f}")
+
+fig, ax = plt.subplots(figsize=(6, 4))
+ax.plot(compression_ratios, losses_in_order, marker='o')
+for d, r, l in zip(LATENT_DIMS, compression_ratios, losses_in_order):
+    ax.annotate(f"d={d}", xy=(r, l), xytext=(5, 5), textcoords='offset points')
+ax.set_xlabel("Compression ratio  (latent bits / image bits)")
+ax.set_ylabel("Average test reconstruction MSE per image")
+ax.set_title("VAE: reconstruction loss vs. compression ratio on CIFAR-10")
+ax.grid(True, alpha=0.3)
+plt.tight_layout()
+plt.show()
+
+
+# %% [markdown]
+# **Part D.4 — Discussion.**
+#
+# The measured curve has **two regimes** rather than a single monotone descent:
+#
+# 1. **Sharp drop, $d=16\to 64$:** average test MSE falls from $\approx 61$ to $\approx 53$. At $d=16$ the bottleneck is below the intrinsic dimensionality of natural CIFAR-10 images, so a great deal of pixel-level information is irrecoverably destroyed; reconstructions look blurry and lose colour and texture detail. Widening the channel to $d=64$ recovers most of the achievable quality.
+# 2. **Plateau (and slight rise), $d\geq 64$:** MSE sits around $53$ and even ticks up to $\approx 54$ at $d=256$. So beyond $d=64$, extra latent dimensions are *not* improving reconstruction in this run — contrary to the expectation "monotonically decreasing with diminishing returns" picture.
+#
+# Why the plateau (not a continued descent)? (Diagnosed by Claude Opus 4.7)
+#
+# * **KL pressure scales with $d$, reconstruction does not.** The KL term in the ELBO is a sum over latent dimensions, $\sum_{i=1}^{d}-\tfrac12(1+\log\sigma_i^2-\mu_i^2-\sigma_i^2)$, so its magnitude grows linearly with $d$. The reconstruction term, by contrast, is a sum over a fixed $3{,}072$ pixels. As $d$ grows, the relative weight of "match the prior $\mathcal{N}(\mathbf{0},\mathbf{I}_d)$" grows, and the optimiser increasingly prefers to leave extra latent dimensions uninformative. This is the classic **posterior-collapse** failure mode: many dimensions of $z$ collapse onto the prior and carry no information about $x$.
+# * **Trained on ELBO, evaluated on MSE.** ``test()`` reports only the reconstruction term. Once $d$ is large enough that the ELBO optimum trades MSE for KL, the test MSE stops improving even though the joint loss may still be falling.
+# * **Fixed 25-epoch budget.** Larger models have more parameters (mostly in ``fc_mu``, ``fc_log_var``, ``fc_dec``) and may simply be undertrained at this schedule, which can explain the slight bump from $d=128$ to $d=256$.
+# * **Decoder capacity is fixed.** Only the latent layer and ``fc_dec`` widen with $d$; the three ``ConvTranspose2d`` layers are unchanged. Even if the encoder packed more information into the latent, the decoder may lack the capacity to exploit it.
+#

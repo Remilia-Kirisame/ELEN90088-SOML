@@ -1,8 +1,10 @@
 # For Exercises
 scikit-learn
 numpy
+scipy
 pandas
 matplotlib
 seaborn
 cvxpy
 torch
+torchvision

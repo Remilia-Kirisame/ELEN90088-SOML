@@ -2,18 +2,9 @@
 
 Coursework repository for [ELEN90088 System Optimisation and Machine Learning](https://handbook.unimelb.edu.au/subjects/elen90088) at the University of Melbourne (2026).
 
-This repository collects my solutions, supporting notes, and the final project for the subject. Weekly exercises live under `Exercises/`, and the project brief together with its starter materials live under `Project-Description/`. `Project-LLM/` is the work-in-process folder.
+This repository collects my solutions, supporting notes, and the final project for the subject. Weekly exercises live under `Exercises/` (with my own notes and supporting materials under `Exercises/docs/`), and the project brief together with its starter materials under `Project-Description/`. `Project-LLM/` is the work-in-process folder.
 
-## Subject Overview
-
-ELEN90088 covers the mathematical foundations and practical tools of modern optimisation and machine learning, including:
-
-- Convex analysis and convex optimisation
-- Unconstrained and constrained optimisation, duality, and KKT conditions
-- Gradient-based methods (GD, SGD, accelerated and adaptive variants)
-- Linear models, classification, and regularisation
-- Neural networks and deep learning
-- Disciplined convex programming with CVXPY and modern ML frameworks
+---
 
 ## Repository Structure
 
@@ -23,9 +14,10 @@ ELEN90088 covers the mathematical foundations and practical tools of modern opti
 │   ├── SOML2026_Exercise_1.ipynb       # Exercise 1 — my solution
 │   ├── SOML2026_Exercise_1_Sol.ipynb   # Official solution (reference)
 │   ├── SOML2026_Exercise_2.ipynb       # Exercise 2 — my solution
-│   ├── Additional_Notes_Ex_1.md        # Exercise 1 notes
-│   ├── Additional_Notes_Ex_2.md        # Exercise 2 notes
-│   └── How It Works - DNN/             # Supporting materials for the DNN question
+│   ├── SOML2026_Exercise_2.py          # Jupytext-paired script for Exercise 2
+│   ├── Zhiqi's Solution/               # Peer reference solution for Ex 2
+│   └── docs/                           # My notes and supporting materials
+│
 ├── Project-Description/
 │   ├── SOML_Project_26S1.md            # Overall project brief
 │   ├── Project_1_Learn_to_Optimise.md  # Option 1 — learn-to-optimise
@@ -34,7 +26,8 @@ ELEN90088 covers the mathematical foundations and practical tools of modern opti
 │   ├── SOML_LLM_project_MacOS.yaml     # Conda env spec (macOS, optional)
 │   └── SOML_LLM_project_Windows.yaml   # Conda env spec (Windows / CUDA, optional)
 ├── Project-LLM/
-│   ├── SOML_LLM_project.ipynb          # Starter notebook (Working on)
+│   ├── SOML_LLM_project.ipynb          # Working project notebook (edited locally, run on HPC)
+│   └── Results-ipynb/                  # Outputs and write-ups for selected parts
 ├── requirements.txt                    # pip requirements for the exercises
 └── README.md
 ```
@@ -42,9 +35,11 @@ ELEN90088 covers the mathematical foundations and practical tools of modern opti
 Progress:
 
 - [x] Exercise 1 — Convexity, linear models, logistic regression
-- [ ] Exercise 2
+- [x] Exercise 2 — SVM, clustering (K-Means / GMM), DNN, VAE
 - [ ] Exercise 3
-- [ ] Subject Project
+- [ ] Subject Project (Option 2 — Hands-on LLMs) — starter notebook complete; mini project in progress
+
+---
 
 ## Getting Started
 
@@ -80,7 +75,9 @@ Then open any notebook under `Exercises/` and run the cells top-to-bottom. In VS
 
 ### Project 2 (Hands-on LLMs)
 
-I run the subject project on **Google Colab**: `SOML_LLM_project.ipynb` is uploaded there and executed on Colab's GPU/TPU, so no local environment is required for the project itself. See `Project-Description/Project_2_Hands-on_LLMs.md` for details. The two `.yaml` files in `Project-Description/` are conda env specs provided by the teaching team for students who prefer to run the project locally.
+I run the subject project on the **University of Melbourne HPC (Spartan, via Open OnDemand)**. `Project-LLM/SOML_LLM_project.ipynb` is edited locally and executed remotely; the notebook reads `SPARTAN_PROJECT_DIR` and routes the Hugging Face / transformers / datasets caches and working directories under that path so model weights persist across sessions. See `Project-Description/Project_2_Hands-on_LLMs.md` for the brief. The two `.yaml` files in `Project-Description/` are conda env specs provided by the teaching team for students who prefer to run the project locally; I don't use them.
+
+---
 
 ## Dependencies
 
@@ -89,12 +86,14 @@ Listed in [`requirements.txt`](./requirements.txt):
 | Package        | Purpose                                      |
 | -------------- | -------------------------------------------- |
 | `numpy`        | Numerical computing, linear algebra          |
+| `scipy`        | Scientific computing (stats, distributions)  |
 | `pandas`       | Data manipulation                            |
 | `matplotlib`   | Plotting                                     |
 | `seaborn`      | Statistical visualisation                    |
 | `scikit-learn` | Classical ML algorithms, datasets, utilities |
 | `cvxpy`        | Disciplined convex programming               |
 | `torch`        | Deep learning                                |
+| `torchvision`  | Vision datasets (CIFAR-10) and transforms    |
 
 ## Notes on Use
 
@@ -102,6 +101,16 @@ Listed in [`requirements.txt`](./requirements.txt):
 - If you are currently enrolled in ELEN90088, please consult your subject's academic integrity policy before referring to any material here. Copying submissions is a breach of the University's Academic Integrity rules.
 - Official solutions in this repository were provided by the teaching team; redistribution beyond personal reference is not intended.
 
+**Import to html (then to pdf)**
+
+If export to html fails: (In my condition with VSCode, `pyzmq<25` is required while my pip list `pyzmq=27.1`).
+
+```bash
+pip install nbconvert
+# Now export button should work, or:
+jupyter nbconvert --to html SOML2026_Exercise_x.ipynb
+```
+
 ## License
 
-This repository is provided for personal and educational reference. No explicit license is granted; please contact me before reusing substantial portions of the material.
+This repository is provided for personal and educational reference. No explicit license is granted.

@@ -6,6 +6,7 @@ tags:
   - metrics
   - exercise-2
 created: 2026-05-05
+Author: DeepSeek V4
 ---
 
 ## SVM Fundamentals (Q4 Context)

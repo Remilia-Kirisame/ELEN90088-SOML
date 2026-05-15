@@ -20,6 +20,9 @@ GEMINI.md
 .claude/
 AGENTS.md
 
+# Superpowers planning artifacts (specs, plans) — kept local-only
+docs/superpowers/
+
 # Work in Process folder
 WIP/
 
@@ -29,3 +32,28 @@ Exercises/Ex2-*/
 # Reproducing Target Repo for Mini-project
 # Link: https://github.com/NVlabs/DoRA#
 DoRA/
+Risk-Assessment-mini-project.md
+2402.09353v6.pdf
+
+# --- mini-project (Project-LLM-mini) ---
+# Local-only venv (uv venv on Spartan lives in punim2744; on Mac we don't install)
+Project-LLM-mini/.venv/
+
+# Per-user env file with real site-specific paths
+Project-LLM-mini/scripts/local/setup_env.sh
+
+# Results: track small text artifacts; ignore heavy ones
+Project-LLM-mini/results/_slurm/
+Project-LLM-mini/results/*/adapter/
+Project-LLM-mini/results/*/checkpoint-*/
+Project-LLM-mini/results/*/trainer_out/
+Project-LLM-mini/results/*/pytorch_model*.bin
+Project-LLM-mini/results/*/*.safetensors
+
+# Figures WIP
+Project-LLM-mini/figures/_wip/
+
+# Python
+__pycache__/
+*.egg-info/
+.pytest_cache/

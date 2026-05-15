@@ -40,7 +40,7 @@ def _print_env() -> None:
     import transformers
 
     g = _gpu_info()
-    print("=== env ===")
+    print("=== env ===", flush=True)
     print(f"python  : {platform.python_version()}")
     print(f"torch   : {torch.__version__}")
     print(f"transformers : {transformers.__version__}")
@@ -60,7 +60,7 @@ def _print_env() -> None:
 
 
 def _print_config(config: dict) -> None:
-    print("=== config ===")
+    print("=== config ===", flush=True)
     print(yaml.safe_dump(config, sort_keys=False).rstrip())
     print("==========", flush=True)
 
@@ -73,7 +73,7 @@ def _print_model(cfg: dict, model) -> None:
         mem_total = torch.cuda.get_device_properties(0).total_memory / 1e9
     else:
         mem_alloc = mem_total = 0.0
-    print("=== model ===")
+    print("=== model ===", flush=True)
     print(f"base       : {cfg['model']['name']}")
     print(
         f"peft       : {cfg['peft']['method'].upper()} "
@@ -160,6 +160,9 @@ def run_training(config_path: str) -> None:
     trainer.train()
     finished = time.time()
     finished_iso = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(finished))
+    peak_mem_gb = (
+        torch.cuda.max_memory_allocated() / 1e9 if torch.cuda.is_available() else 0.0
+    )
     print(
         f"=== training end {finished_iso} ({finished-started:.0f} s) ===",
         flush=True,
@@ -172,9 +175,6 @@ def run_training(config_path: str) -> None:
 
     eval_metrics = evaluate_boolq(model, tokenizer, eval_ds, max_length=max_len)
 
-    peak_mem_gb = (
-        torch.cuda.max_memory_allocated() / 1e9 if torch.cuda.is_available() else 0.0
-    )
     trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
     total = sum(p.numel() for p in model.parameters())
 
@@ -204,7 +204,7 @@ def run_training(config_path: str) -> None:
     }
     (rdir / "metrics.json").write_text(json.dumps(metrics, indent=2))
 
-    print("=== final ===")
+    print("=== final ===", flush=True)
     print(f"eval_accuracy : {eval_metrics['accuracy']:.4f}")
     print(f"eval_loss     : {eval_metrics['loss']:.4f}")
     print(f"train_runtime : {int(finished - started)} s")

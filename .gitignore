@@ -53,7 +53,6 @@ Project-LLM-mini/results/*/*.safetensors
 # Figures WIP
 Project-LLM-mini/figures/_wip/
 
-# Python
-__pycache__/
+# Python (mini-project additions; __pycache__/ already covered at the top)
 *.egg-info/
 .pytest_cache/

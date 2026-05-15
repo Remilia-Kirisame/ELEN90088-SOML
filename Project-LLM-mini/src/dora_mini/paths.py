@@ -12,7 +12,7 @@ from pathlib import Path
 
 
 def _require_env(name: str) -> str:
-    val = os.environ.get(name)
+    val = os.environ.get(name, "").strip()
     if not val:
         raise RuntimeError(
             f"{name} is not set. Source scripts/local/setup_env.sh first."
@@ -36,7 +36,9 @@ def hf_home() -> Path:
 
 
 def results_dir(run_id: str) -> Path:
-    """Per-run results directory; creates it (and parents) if missing."""
+    """Per-run results directory; mkdir parents=True exist_ok=True (idempotent — preserves existing contents)."""
+    if not run_id or not run_id.strip():
+        raise ValueError("run_id must not be empty")
     d = project_dir() / "results" / run_id
     d.mkdir(parents=True, exist_ok=True)
     return d

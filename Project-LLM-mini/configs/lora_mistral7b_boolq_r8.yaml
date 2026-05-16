@@ -18,7 +18,7 @@ data:
 training:
   batch_size: 4
   grad_accum: 4             # effective batch size = 16
-  learning_rate: 5e-5
+  learning_rate: 5.0e-5
   num_steps: 500
   warmup_steps: 50
   eval_every: 100

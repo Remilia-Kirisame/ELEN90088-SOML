@@ -14,7 +14,7 @@ from pathlib import Path
 import torch
 import yaml
 from transformers import (
-    DataCollatorForLanguageModeling,
+    DataCollatorForSeq2Seq,
     Trainer,
     TrainerCallback,
     TrainingArguments,
@@ -142,7 +142,7 @@ def run_training(config_path: str) -> None:
         remove_unused_columns=False,
         disable_tqdm=False,
     )
-    collator = DataCollatorForLanguageModeling(tokenizer, mlm=False)
+    collator = DataCollatorForSeq2Seq(tokenizer)
     history = LossHistoryCallback()
 
     trainer = Trainer(

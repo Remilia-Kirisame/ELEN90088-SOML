@@ -12,6 +12,7 @@ from pathlib import Path
 
 
 def _require_env(name: str) -> str:
+    # .strip() guards against env vars that were set to whitespace by accident (e.g. via `export FOO= ` with a trailing space) — those should fail like an unset var.
     val = os.environ.get(name, "").strip()
     if not val:
         raise RuntimeError(

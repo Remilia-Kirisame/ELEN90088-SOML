@@ -138,7 +138,7 @@ def run_training(config_path: str) -> None:
         save_strategy="no",
         bf16=(cfg["model"]["dtype"] == "bfloat16"),
         seed=cfg["training"]["seed"],
-        report_to="none",
+        report_to="none",     # don't auto-init wandb/tensorboard — we write our own metrics.json
         remove_unused_columns=False,
         disable_tqdm=False,
     )

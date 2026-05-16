@@ -49,6 +49,7 @@ def format_for_training(
     prompt_ids = tokenizer(prompt_text, add_special_tokens=False)["input_ids"]
 
     # Tokenize the full sequence (prompt + answer + eos).
+    # The explicit eos_token concat matters: without it, the model never learns to stop after the answer token and generation rambles at inference time.
     full_text = prompt_text + answer + tokenizer.eos_token
     full = tokenizer(
         full_text, truncation=True, max_length=max_length, add_special_tokens=False

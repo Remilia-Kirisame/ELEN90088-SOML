@@ -1,12 +1,13 @@
 #!/bin/bash
-# Copy this file to setup_env.sh and fill in your real values.
-# setup_env.sh is gitignored — never commit your actual site paths.
+# Template for the gitignored setup_env.sh that lives next to this file.
+# Copy this file to setup_env.sh and fill in your real values; setup_env.sh is gitignored — never commit your actual site paths.
+#
+# Why split storage: code lives in HOME (small quota, NFS, fine for editing) but model weights + venv are bulky and benefit from project storage (large quota, parallel filesystem). The env vars below route HF cache + uv venv to project storage.
 #
 # Usage on Spartan:
 #   source scripts/local/setup_env.sh
 #
-# All paths below use placeholders; replace <your-project-id> with the real
-# project allocation id from your shared HPC allocation.
+# Placeholders below: replace <your-project-id> with your shared HPC allocation id.
 
 # Code lives in $HOME (repo clone)
 export PROJECT_DIR="$HOME/ELEN90088-SOML/Project-LLM-mini"

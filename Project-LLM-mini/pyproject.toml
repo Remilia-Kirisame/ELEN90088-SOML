@@ -12,6 +12,7 @@ dependencies = [
     "datasets>=3.0",
     "bitsandbytes>=0.43.1",
     "sentencepiece",
+    "protobuf",
     "pandas",
     "matplotlib",
     "pyyaml",

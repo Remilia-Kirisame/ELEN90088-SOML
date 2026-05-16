@@ -1,4 +1,9 @@
-"""CLI: python scripts/train.py --config configs/foo.yaml"""
+"""CLI wrapper around dora_mini.train.run_training.
+
+Use: python scripts/train.py --config configs/<run>.yaml
+Submit via SLURM: sbatch scripts/sbatch_train.sh configs/<run>.yaml
+The heavy lifting (HF Trainer integration, metrics writing) is in dora_mini/train.py — this file is just argparse + delegation.
+"""
 from __future__ import annotations
 
 import argparse

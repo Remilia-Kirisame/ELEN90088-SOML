@@ -19,6 +19,10 @@ _DTYPE_MAP = {
 
 
 def load_tokenizer(model_name: str):
+    """Load a tokenizer; fall back to eos_token for padding if not set.
+
+    Mistral-Instruct doesn't define a pad token by default, but the HF Trainer needs one for batching. Reusing eos here is harmless because we mask labels on padding positions during training (DataCollatorForSeq2Seq does this).
+    """
     tok = AutoTokenizer.from_pretrained(model_name)
     if tok.pad_token is None:
         tok.pad_token = tok.eos_token
@@ -26,6 +30,7 @@ def load_tokenizer(model_name: str):
 
 
 def load_base_model(model_name: str, dtype: str = "bfloat16"):
+    """Load a causal-LM in the requested dtype, sharded automatically across visible GPUs."""
     if dtype not in _DTYPE_MAP:
         raise ValueError(f"Unknown dtype: {dtype}. Choose from {list(_DTYPE_MAP)}.")
     return AutoModelForCausalLM.from_pretrained(

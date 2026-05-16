@@ -40,7 +40,6 @@ HF_DIR = PROJECT_DIR / "huggingface"
 
 paths = {
     "HF_HOME": HF_DIR,
-    "TRANSFORMERS_CACHE": HF_DIR / "transformers",
     "HF_DATASETS_CACHE": HF_DIR / "datasets",
     "HF_HUB_CACHE": HF_DIR / "hub",
     "HF_ASSETS_CACHE": HF_DIR / "assets",
@@ -632,7 +631,7 @@ the                                           1  ['▁the']
 print("Loading raw model (16-bit baseline)...")
 model_raw = AutoModelForCausalLM.from_pretrained(
     model_id,
-    torch_dtype=torch.bfloat16,
+    dtype=torch.bfloat16,
     device_map="auto",
     cache_dir=cache_dir
 )
@@ -699,7 +698,7 @@ for key in [
     "sliding_window",             # None / large number -> no SWA
     "rope_theta",
     "tie_word_embeddings",
-    "torch_dtype",
+    "dtype",
 ]:
     print(f"  {key:28s} : {getattr(cfg, key, 'n/a')}")
 
@@ -723,7 +722,7 @@ print(model_raw.model.layers[0])
   sliding_window               : 262144
   rope_theta                   : n/a
   tie_word_embeddings          : False
-  torch_dtype                  : torch.bfloat16
+  dtype                  : torch.bfloat16
 
 === Top-level module tree ===
 Phi3ForCausalLM(
@@ -783,7 +782,7 @@ Phi3DecoderLayer(
   sliding_window               : None
   rope_theta                   : n/a
   tie_word_embeddings          : False
-  torch_dtype                  : torch.bfloat16
+  dtype                  : torch.bfloat16
 
 === Top-level module tree ===
 MistralForCausalLM(
@@ -899,7 +898,7 @@ tokenizer.save_pretrained(local_path)
 # To reload the model later from your local storage:
 model_local = AutoModelForCausalLM.from_pretrained(
     local_path,
-    torch_dtype=torch.bfloat16,
+    dtype=torch.bfloat16,
     device_map="auto"
 )
 tokenizer_local = AutoTokenizer.from_pretrained(local_path)
@@ -1071,7 +1070,7 @@ print_hpc_resources()
 # tokenizer = AutoTokenizer.from_pretrained(model_id, cache_dir=cache_dir)
 # model = AutoModelForCausalLM.from_pretrained(
 #     model_id,
-#     torch_dtype=torch.bfloat16, # Baseline precision
+#     dtype=torch.bfloat16, # Baseline precision
 #     device_map="auto",
 #     cache_dir=cache_dir
 # )
@@ -1082,7 +1081,7 @@ reset_gpu_memory('model_local')
 print(f"Loading from local_path: {local_path}")
 model = AutoModelForCausalLM.from_pretrained(
     local_path,
-    torch_dtype=torch.bfloat16,
+    dtype=torch.bfloat16,
     device_map="auto"
 )
 tokenizer = AutoTokenizer.from_pretrained(local_path)
@@ -1253,7 +1252,7 @@ print(generate_text(specific_prompt, max_tokens=300, temperature=0.2))
 # # Try using phi-3.5-mini-instruct model
 # model_phi = AutoModelForCausalLM.from_pretrained(
 #     "microsoft/Phi-3.5-mini-instruct",
-#     torch_dtype=torch.bfloat16,
+#     dtype=torch.bfloat16,
 #     device_map="auto",
 #     cache_dir=str(WORK_DIR / "cache" / "phi_proj")
 # )
@@ -1670,7 +1669,7 @@ if torch.cuda.is_available():
 print("Loading Baseline Model (bf16)...")
 model_16bit = AutoModelForCausalLM.from_pretrained(
     model_id,
-    torch_dtype=torch.bfloat16,
+    dtype=torch.bfloat16,
     device_map="auto",
     cache_dir=cache_dir
 )

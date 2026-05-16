@@ -30,7 +30,7 @@ def load_base_model(model_name: str, dtype: str = "bfloat16"):
         raise ValueError(f"Unknown dtype: {dtype}. Choose from {list(_DTYPE_MAP)}.")
     return AutoModelForCausalLM.from_pretrained(
         model_name,
-        torch_dtype=_DTYPE_MAP[dtype],
+        dtype=_DTYPE_MAP[dtype],
         device_map="auto",
     )
 

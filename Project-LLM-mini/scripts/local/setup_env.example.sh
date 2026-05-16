@@ -19,7 +19,6 @@ export UV_PROJECT_ENVIRONMENT="$PUNIM_MINI/venv"
 
 # HuggingFace cache routing
 export HF_HOME="$PUNIM_MINI/hf-cache"
-export TRANSFORMERS_CACHE="$HF_HOME/transformers"
 export HF_DATASETS_CACHE="$HF_HOME/datasets"
 export HF_HUB_CACHE="$HF_HOME/hub"
 

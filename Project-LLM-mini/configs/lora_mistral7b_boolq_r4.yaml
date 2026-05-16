@@ -1,0 +1,31 @@
+# Tier 1 sweep: LoRA r=4 on BoolQ with Mistral-7B-Instruct-v0.3.
+# Paired with dora_mistral7b_boolq_r4.yaml — only `peft.method` differs, so any LoRA-vs-DoRA accuracy delta is attributable to the method, not other config noise.
+
+model:
+  name: mistralai/Mistral-7B-Instruct-v0.3   # open + ungated; same family as Parts 1-5
+  dtype: bfloat16                              # Hopper-optimized; no FP16 underflow
+
+peft:
+  method: lora                                 # the experimental arm (lora | dora)
+  r: 4                                         # low-rank dim; sweep covers {4, 8, 16}
+  alpha: 8                                     # alpha/r = 2 ratio held across the sweep
+  target_modules: all-linear                   # wrap every nn.Linear (simpler than per-module list)
+  dropout: 0.05
+
+data:
+  dataset: boolq                               # simplest of the 8 commonsense tasks the DoRA paper used
+  train_size: 2000                             # subset for fast first run; scale up in sweep
+  eval_size: 500
+  max_length: 512                              # covers ~99% of BoolQ examples in tokens
+
+training:
+  batch_size: 4
+  grad_accum: 4                                # effective batch size = 16
+  learning_rate: 5.0e-5                        # explicit dot — PyYAML 1.1 parses bare 5e-5 as a string and Trainer crashes
+  num_steps: 500                               # ~4 epochs over the 2000-example slice at effective batch 16
+  warmup_steps: 50
+  eval_every: 100
+  seed: 42
+
+output:
+  run_id: lora_mistral7b_boolq_r4

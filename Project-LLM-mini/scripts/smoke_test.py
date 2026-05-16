@@ -15,7 +15,7 @@ from __future__ import annotations
 import sys
 
 import torch
-from transformers import DataCollatorForLanguageModeling
+from transformers import DataCollatorForSeq2Seq
 
 from dora_mini import data, models
 from dora_mini.train import _print_env
@@ -51,7 +51,7 @@ def main() -> int:
           f"{[len(b['input_ids']) for b in batch]}")
 
     print(f"\n--- step 5/6: one forward+backward pass")
-    collator = DataCollatorForLanguageModeling(tokenizer, mlm=False)
+    collator = DataCollatorForSeq2Seq(tokenizer)
     inputs = collator(batch)
     inputs = {k: v.to(model.device) for k, v in inputs.items()}
     out = model(**inputs)

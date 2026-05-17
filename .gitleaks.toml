@@ -1,0 +1,42 @@
+title = "ELEN90088-SOML leak guard"
+
+# Extend the gitleaks default ruleset (AWS keys, GitHub tokens, JWT, etc.)
+[extend]
+useDefault = true
+
+# --- Custom rules: GENERIC patterns only. ---
+# Specific literals (real-name variants, the personal email, the exact project
+# allocation ID) are configured in GitHub UI -> Settings -> Code security ->
+# Custom patterns, which is admin-only and not visible to the public repo.
+
+[[rules]]
+id = "macos-user-path"
+description = "Absolute macOS user-home path"
+regex = '''/Users/[a-z][a-z0-9_-]+/'''
+tags = ["path", "pii"]
+
+[[rules]]
+id = "unimelb-spartan-allocation"
+description = "UniMelb Spartan HPC project allocation ID"
+regex = '''punim\d+'''
+tags = ["path", "pii"]
+
+[[rules]]
+id = "spartan-project-path"
+description = "Absolute Spartan project storage path"
+regex = '''/data/(gpfs|scratch)/projects/[a-z0-9_-]+'''
+tags = ["path", "pii"]
+
+[[rules]]
+id = "linux-home-path"
+description = "Absolute Linux home directory path"
+regex = '''/home/[a-z][a-z0-9_-]+/'''
+tags = ["path", "pii"]
+
+[allowlist]
+description = "Intentional content that should not trigger PII rules"
+regexes = [
+  '''muhan\.guan\.1@unimelb\.edu\.au''',
+  '''<your-project-id>''',
+  '''<project-id>''',
+]

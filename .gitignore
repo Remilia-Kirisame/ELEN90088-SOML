@@ -36,7 +36,7 @@ Risk-Assessment-mini-project.md
 2402.09353v6.pdf
 
 # --- mini-project (Project-LLM-mini) ---
-# Local-only venv (uv venv on Spartan lives in <project-id>; on Mac we don't install)
+# Local-only venv (uv venv on Spartan lives under the project allocation; on Mac we don't install)
 Project-LLM-mini/.venv/
 
 # Per-user env file with real site-specific paths

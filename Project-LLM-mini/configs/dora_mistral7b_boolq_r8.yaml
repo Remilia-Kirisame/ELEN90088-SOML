@@ -1,0 +1,32 @@
+# Tier 1 baseline: DoRA r=8 on BoolQ with Mistral-7B-Instruct-v0.3.
+# Paired with lora_mistral7b_boolq_r8.yaml — only `peft.method` differs.
+# DoRA decomposes each weight W into magnitude + direction (LoRA-style update on the direction, separate magnitude vector); flips on via use_dora=True in PEFT.
+
+model:
+  name: mistralai/Mistral-7B-Instruct-v0.3
+  dtype: bfloat16
+
+peft:
+  method: dora                                 # use_dora=True in HF PEFT's LoraConfig
+  r: 8
+  alpha: 16
+  target_modules: all-linear
+  dropout: 0.05
+
+data:
+  dataset: boolq
+  train_size: 2000
+  eval_size: 500
+  max_length: 512
+
+training:
+  batch_size: 4
+  grad_accum: 4
+  learning_rate: 5.0e-5                        # explicit dot — see lora YAML for why
+  num_steps: 500
+  warmup_steps: 50
+  eval_every: 100
+  seed: 42
+
+output:
+  run_id: dora_mistral7b_boolq_r8

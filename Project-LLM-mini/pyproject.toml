@@ -1,0 +1,55 @@
+# DoRA paper reproduction for ELEN90088 SOML mini-project.
+# Uses HuggingFace PEFT's LoraConfig(use_dora=True) — NOT the DoRA paper's bundled custom PEFT fork (we treat the paper's `DoRA/peft/` as reference only).
+
+[project]
+name = "dora-mini"
+version = "0.1.0"
+description = "DoRA paper reproduction for ELEN90088 SOML mini-project"
+requires-python = ">=3.10,<3.13"
+dependencies = [
+    # Core ML stack — torch pinned to 2.6.0 + cu124 wheel (matches the CUDA module on Spartan).
+    "torch==2.6.0",
+    "torchvision==0.21.0",
+    # PEFT + adapters — peft >=0.13 has the use_dora flag in LoraConfig.
+    "transformers>=4.45,<5",
+    "peft>=0.13",
+    "accelerate>=1.0",
+    # Datasets + tokenizer support.
+    "datasets>=3.0",
+    "bitsandbytes>=0.43.1",                      # required for 4-bit (Tier 4 QDoRA work)
+    "sentencepiece",                              # Mistral tokenizer is sentencepiece-based
+    "protobuf",                                   # required transitively by sentencepiece
+    # Analysis + plotting.
+    "pandas",
+    "matplotlib",
+    "pyyaml",
+    "tqdm",
+]
+
+[project.optional-dependencies]
+# Dev-only: jupytext for paired notebooks, ruff for linting, pytest for tests.
+dev = ["jupytext", "ipykernel", "ruff", "pytest"]
+
+[tool.uv]
+package = true
+
+# Pin the cu124 PyTorch index — Spartan's CUDA module is 12.4.x.
+[[tool.uv.index]]
+name = "pytorch-cu124"
+url = "https://download.pytorch.org/whl/cu124"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cu124" }
+torchvision = { index = "pytorch-cu124" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]

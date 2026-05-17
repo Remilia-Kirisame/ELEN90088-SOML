@@ -20,6 +20,9 @@ GEMINI.md
 .claude/
 AGENTS.md
 
+# Local-only gitleaks config (contains specific literals — never commit)
+.gitleaks.local.toml
+
 # Superpowers planning artifacts (specs, plans) — kept local-only
 docs/superpowers/
 

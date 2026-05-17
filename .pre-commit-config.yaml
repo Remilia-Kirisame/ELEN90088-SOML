@@ -23,3 +23,16 @@ repos:
       - id: detect-private-key
       - id: check-added-large-files
         args: ['--maxkb=2048']
+
+  # Local hook: scans for specific literals (name, personal email, exact
+  # allocation ID) using a gitignored .gitleaks.local.toml. Silently skips
+  # if the file is absent, so it costs nothing on machines without it.
+  # Requires `gitleaks` in PATH (`brew install gitleaks` on Mac).
+  - repo: local
+    hooks:
+      - id: gitleaks-local-literals
+        name: gitleaks (local literals; Mac-only)
+        entry: bash -c 'if [ -f .gitleaks.local.toml ]; then gitleaks protect --staged --config .gitleaks.local.toml --no-banner --redact; fi'
+        language: system
+        pass_filenames: false
+        always_run: true

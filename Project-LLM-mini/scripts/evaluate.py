@@ -1,6 +1,10 @@
-"""CLI: re-evaluate a saved adapter against BoolQ.
+"""Generation exact-match eval pass over saved adapters (or the base model).
 
-python scripts/evaluate.py --adapter results/<run_id>/adapter/ --config results/<run_id>/config.yaml
+Adapter run — append eval_accuracy_genmatch to an existing metrics.json:
+    python scripts/evaluate.py --run results/<run_id>
+
+Zero-shot baseline — score the base model, no adapter, write a fresh metrics.json:
+    python scripts/evaluate.py --zero-shot --model mistralai/Mistral-7B-Instruct-v0.3
 """
 from __future__ import annotations
 
@@ -13,25 +17,57 @@ import yaml
 from peft import PeftModel
 
 from dora_mini import data, models
-from dora_mini.eval import evaluate_boolq
+from dora_mini.answer_parsing import parse_true_false, parse_yes_no
+from dora_mini.eval import evaluate_boolq, evaluate_boolq_generate
+
+# Each phase's model emits answers in its training-set's vocabulary.
+_PARSERS = {
+    "boolq": (parse_yes_no, {True: "yes", False: "no"}),
+    "commonsense_170k": (parse_true_false, {True: "true", False: "false"}),
+}
 
 
 def main() -> int:
     p = argparse.ArgumentParser()
-    p.add_argument("--adapter", required=True, help="Path to PEFT adapter directory.")
-    p.add_argument("--config", required=True, help="Path to that run's config.yaml.")
+    p.add_argument("--run", help="results/<run_id> dir with config.yaml + adapter/.")
+    p.add_argument("--zero-shot", action="store_true", help="Score the base model, no adapter.")
+    p.add_argument("--model", help="Base model name (zero-shot only).")
+    p.add_argument("--eval-size", type=int, default=3270)
     args = p.parse_args()
 
-    cfg = yaml.safe_load(Path(args.config).read_text())
-    tokenizer = models.load_tokenizer(cfg["model"]["name"])
-    base = models.load_base_model(cfg["model"]["name"], cfg["model"]["dtype"])
-    model = PeftModel.from_pretrained(base, args.adapter)
+    if not args.zero_shot and args.run is None:
+        p.error("one of --run or --zero-shot is required")
+    if args.zero_shot and args.model is None:
+        p.error("--model is required with --zero-shot")
 
-    eval_ds = data.load_boolq("validation", limit=cfg["data"].get("eval_size"))
-    metrics = evaluate_boolq(
-        model, tokenizer, eval_ds, max_length=cfg["data"]["max_length"]
-    )
-    print(json.dumps(metrics, indent=2))
+    if args.zero_shot:
+        model_name = args.model
+        tokenizer = models.load_tokenizer(model_name)
+        model = models.load_base_model(model_name, "bfloat16")
+        parser, gold_map = _PARSERS["boolq"]   # untuned instruct model answers yes/no
+        run_dir = Path("results/zeroshot_mistral7b_boolq")
+        run_dir.mkdir(parents=True, exist_ok=True)
+        metrics: dict = {"run_id": run_dir.name, "model": model_name,
+                         "eval_size": args.eval_size}
+        eval_ds = data.load_boolq("validation", limit=args.eval_size)
+        lik = evaluate_boolq(model, tokenizer, eval_ds, max_length=512)
+        metrics["eval_accuracy_likelihood"] = lik["accuracy"]
+        metrics["eval_loss"] = lik["loss"]
+    else:
+        run_dir = Path(args.run)
+        cfg = yaml.safe_load((run_dir / "config.yaml").read_text())
+        model_name = cfg["model"]["name"]
+        tokenizer = models.load_tokenizer(model_name)
+        base = models.load_base_model(model_name, cfg["model"]["dtype"])
+        model = PeftModel.from_pretrained(base, str(run_dir / "adapter"))
+        parser, gold_map = _PARSERS[cfg["data"]["train_dataset"]]
+        metrics = json.loads((run_dir / "metrics.json").read_text())
+        eval_ds = data.load_boolq("validation", limit=args.eval_size)
+
+    gen = evaluate_boolq_generate(model, tokenizer, eval_ds, parser, gold_map, max_length=512)
+    metrics["eval_accuracy_genmatch"] = gen["genmatch_accuracy"]
+    (run_dir / "metrics.json").write_text(json.dumps(metrics, indent=2))
+    print(f"{run_dir.name}: genmatch_accuracy = {gen['genmatch_accuracy']:.4f}")
     return 0
 
 

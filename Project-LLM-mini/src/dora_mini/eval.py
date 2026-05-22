@@ -46,3 +46,49 @@ def evaluate_boolq(model, tokenizer, dataset, max_length: int = 512) -> dict:
         nll_sum += -(score_yes if formatted["label"] == 1 else score_no)
 
     return {"accuracy": correct / total, "loss": nll_sum / total}
+
+
+@torch.no_grad()
+def evaluate_boolq_generate(
+    model,
+    tokenizer,
+    dataset,
+    parser,
+    gold_map,
+    max_length: int = 512,
+    max_new_tokens: int = 8,
+) -> dict:
+    """BoolQ accuracy via greedy generation + exact-match (the paper-style metric).
+
+    `parser`: callable(text) -> extracted label string or None.
+    `gold_map`: maps the BoolQ bool answer to the label string `parser` yields,
+    e.g. {True: "yes", False: "no"} for a Yes/No-trained model.
+
+    Unparseable generations score as wrong — this metric is sensitive to the
+    format/training-stability collapse that likelihood scoring is blind to.
+    """
+    model.eval()
+    device = next(model.parameters()).device
+
+    correct = 0
+    total = 0
+    for ex in tqdm(dataset, desc="gen-eval"):
+        formatted = data.format_for_eval(ex, tokenizer, max_length=max_length)
+        input_ids = torch.tensor([formatted["input_ids"]], device=device)
+        attention_mask = torch.tensor([formatted["attention_mask"]], device=device)
+        out = model.generate(
+            input_ids=input_ids,
+            attention_mask=attention_mask,
+            max_new_tokens=max_new_tokens,
+            do_sample=False,
+            pad_token_id=tokenizer.pad_token_id,
+        )
+        gen_text = tokenizer.decode(
+            out[0, input_ids.shape[1]:], skip_special_tokens=True
+        )
+        pred = parser(gen_text)
+        gold = gold_map[bool(ex["answer"])]
+        correct += int(pred == gold)
+        total += 1
+
+    return {"genmatch_accuracy": correct / total}

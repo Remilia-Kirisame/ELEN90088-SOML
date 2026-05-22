@@ -43,3 +43,10 @@ def results_dir(run_id: str) -> Path:
     d = project_dir() / "results" / run_id
     d.mkdir(parents=True, exist_ok=True)
     return d
+
+
+def data_dir() -> Path:
+    """Local data directory (e.g. commonsense_170k.json); gitignored. Created if absent."""
+    d = project_dir() / "data"
+    d.mkdir(parents=True, exist_ok=True)
+    return d

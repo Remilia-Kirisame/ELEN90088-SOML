@@ -39,6 +39,9 @@ Risk-Assessment-mini-project.md
 2402.09353v6.pdf
 
 # --- mini-project (Project-LLM-mini) ---
+# commonsense_170k training data (downloaded on Spartan; ~tens of MB, not committed)
+Project-LLM-mini/data/
+
 # Local-only venv (uv venv on Spartan lives under the project allocation; on Mac we don't install)
 Project-LLM-mini/.venv/
 

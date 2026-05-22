@@ -64,3 +64,10 @@ def test_results_dir_rejects_empty_run_id(monkeypatch, tmp_path):
         paths.results_dir("")
     with pytest.raises(ValueError, match="run_id must not be empty"):
         paths.results_dir("   ")
+
+
+def test_data_dir_creates_under_project(monkeypatch, tmp_path):
+    monkeypatch.setenv("PROJECT_DIR", str(tmp_path))
+    dd = paths.data_dir()
+    assert dd == tmp_path / "data"
+    assert dd.is_dir()

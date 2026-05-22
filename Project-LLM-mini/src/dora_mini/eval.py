@@ -6,6 +6,8 @@ and avoids decoding nondeterminism.
 """
 from __future__ import annotations
 
+import sys
+
 import torch
 from torch.nn.functional import log_softmax
 from tqdm import tqdm
@@ -57,12 +59,14 @@ def evaluate_boolq_generate(
     gold_map,
     max_length: int = 512,
     max_new_tokens: int = 8,
+    debug_print: int = 0,
 ) -> dict:
     """BoolQ accuracy via greedy generation + exact-match (the paper-style metric).
 
     `parser`: callable(text) -> extracted label string or None.
     `gold_map`: maps the BoolQ bool answer to the label string `parser` yields,
     e.g. {True: "yes", False: "no"} for a Yes/No-trained model.
+    `debug_print`: print raw (gen_text, parsed, gold, match) for the first N examples to stderr; 0 disables (default).
 
     Unparseable generations score as wrong — this metric is sensitive to the
     format/training-stability collapse that likelihood scoring is blind to.
@@ -72,7 +76,7 @@ def evaluate_boolq_generate(
 
     correct = 0
     total = 0
-    for ex in tqdm(dataset, desc="gen-eval"):
+    for i, ex in enumerate(tqdm(dataset, desc="gen-eval")):
         formatted = data.format_for_eval(ex, tokenizer, max_length=max_length)
         input_ids = torch.tensor([formatted["input_ids"]], device=device)
         attention_mask = torch.tensor([formatted["attention_mask"]], device=device)
@@ -89,6 +93,11 @@ def evaluate_boolq_generate(
         pred = parser(gen_text)
         gold = gold_map[bool(ex["answer"])]
         correct += int(pred == gold)
+        if i < debug_print:
+            print(
+                f"[debug ex {i}] gen={gen_text!r} parsed={pred!r} gold={gold!r} match={pred == gold}",
+                file=sys.stderr,
+            )
         total += 1
 
     return {"genmatch_accuracy": correct / total}

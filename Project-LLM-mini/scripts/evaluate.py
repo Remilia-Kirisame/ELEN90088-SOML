@@ -33,6 +33,7 @@ def main() -> int:
     p.add_argument("--zero-shot", action="store_true", help="Score the base model, no adapter.")
     p.add_argument("--model", help="Base model name (zero-shot only).")
     p.add_argument("--eval-size", type=int, default=3270)
+    p.add_argument("--debug-print", type=int, default=0, help="Print first N raw generations to stderr; skips the metrics.json write (debug mode, non-destructive).")
     args = p.parse_args()
 
     if not args.zero_shot and args.run is None:
@@ -64,10 +65,13 @@ def main() -> int:
         metrics = json.loads((run_dir / "metrics.json").read_text())
         eval_ds = data.load_boolq("validation", limit=args.eval_size)
 
-    gen = evaluate_boolq_generate(model, tokenizer, eval_ds, parser, gold_map, max_length=512)
+    gen = evaluate_boolq_generate(model, tokenizer, eval_ds, parser, gold_map, max_length=512, debug_print=args.debug_print)
     metrics["eval_accuracy_genmatch"] = gen["genmatch_accuracy"]
-    (run_dir / "metrics.json").write_text(json.dumps(metrics, indent=2))
-    print(f"{run_dir.name}: genmatch_accuracy = {gen['genmatch_accuracy']:.4f}")
+    if args.debug_print > 0:
+        print(f"{run_dir.name}: genmatch_accuracy (debug, n={args.eval_size}) = {gen['genmatch_accuracy']:.4f}  [metrics.json NOT written]", file=sys.stderr)
+    else:
+        (run_dir / "metrics.json").write_text(json.dumps(metrics, indent=2))
+        print(f"{run_dir.name}: genmatch_accuracy = {gen['genmatch_accuracy']:.4f}")
     return 0
 
 

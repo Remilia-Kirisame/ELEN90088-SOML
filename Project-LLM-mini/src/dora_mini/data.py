@@ -89,3 +89,52 @@ def format_for_eval(
         "attention_mask": out["attention_mask"],
         "label": int(example["answer"]),
     }
+
+
+def load_commonsense170k(path, limit: int | None = None) -> Dataset:
+    """Load the LLM-Adapters `commonsense_170k.json` instruction-tuning set.
+
+    Each entry has keys: instruction, input, output, answer. Cached under
+    HF_DATASETS_CACHE. `limit` truncates the pool (None = full ~170k).
+    """
+    ds = load_dataset("json", data_files=str(path), split="train")
+    if limit is not None and limit < len(ds):
+        ds = ds.select(range(limit))
+    return ds
+
+
+def format_commonsense_for_training(
+    example: Mapping[str, Any], tokenizer, max_length: int = 512
+) -> dict[str, list[int]]:
+    """Format one commonsense_170k example for causal-LM training.
+
+    Prompt = instruction (+ input if non-empty); target = output. Mirrors
+    `format_for_training`: prompt tokens are masked (-100) so loss flows only
+    through the answer tokens + eos.
+    """
+    user_msg = example["instruction"]
+    if example.get("input"):
+        user_msg = f"{user_msg}\n\n{example['input']}"
+    answer = example["output"]
+
+    prompt_text = tokenizer.apply_chat_template(
+        [{"role": "user", "content": user_msg}],
+        tokenize=False,
+        add_generation_prompt=True,
+    )
+    prompt_ids = tokenizer(prompt_text, add_special_tokens=False)["input_ids"]
+
+    full_text = prompt_text + answer + tokenizer.eos_token
+    full = tokenizer(
+        full_text, truncation=True, max_length=max_length, add_special_tokens=False
+    )
+
+    labels = list(full["input_ids"])
+    for i in range(min(len(prompt_ids), len(labels))):
+        labels[i] = -100
+
+    return {
+        "input_ids": full["input_ids"],
+        "attention_mask": full["attention_mask"],
+        "labels": labels,
+    }

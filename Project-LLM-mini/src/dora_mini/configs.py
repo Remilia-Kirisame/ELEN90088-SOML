@@ -6,6 +6,7 @@ self-contained: `python scripts/train.py --config configs/<name>.yaml`.
 """
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 MODEL = "mistralai/Mistral-7B-Instruct-v0.3"
@@ -30,6 +31,19 @@ PHASES = {
         "warmup_steps": 100,
     },
 }
+
+
+_GROUP_RE = re.compile(r"_(boolq|cs170k)_r\d+_s\d+$")
+
+
+def run_group(run_id: str) -> str:
+    """Map a run_id to its subfolder under configs/ and results/.
+
+    Tier-2 seeded runs route by training regime (tier2-boolq / tier2-cs170k);
+    anything else — e.g. the unseeded Tier-1 run_ids — routes to tier1/.
+    """
+    m = _GROUP_RE.search(run_id)
+    return f"tier2-{m.group(1)}" if m else "tier1"
 
 
 def build_config(method: str, rank: int, seed: int, phase: str) -> tuple[str, dict]:
@@ -78,14 +92,14 @@ def all_configs() -> dict[str, dict]:
 
 
 def write_configs(configs_dir: Path) -> list[Path]:
-    """Serialise every config to <configs_dir>/<run_id>.yaml. Returns paths written."""
+    """Serialise every config to <configs_dir>/<group>/<run_id>.yaml. Returns paths written."""
     import yaml  # function-level so dict-building tests need no yaml
 
     configs_dir = Path(configs_dir)
-    configs_dir.mkdir(parents=True, exist_ok=True)
     written: list[Path] = []
     for run_id, cfg in sorted(all_configs().items()):
-        path = configs_dir / f"{run_id}.yaml"
+        path = configs_dir / run_group(run_id) / f"{run_id}.yaml"
+        path.parent.mkdir(parents=True, exist_ok=True)
         # yaml.safe_dump emits floats as 5.0e-05 (dotted) — YAML-1.1-safe.
         path.write_text(yaml.safe_dump(cfg, sort_keys=False))
         written.append(path)

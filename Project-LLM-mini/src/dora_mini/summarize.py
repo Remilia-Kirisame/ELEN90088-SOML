@@ -29,7 +29,7 @@ def parse_run_id(run_id: str) -> dict | None:
     }
 
 
-def load_runs(pattern: str = "results/*_s*/metrics.json") -> list[dict]:
+def load_runs(pattern: str = "results/**/metrics.json") -> list[dict]:
     """Load metrics.json for every completed Tier-2 seeded run.
 
     Tier-1 dirs (no _s suffix), unreadable/partial JSON, and runs missing an
@@ -37,7 +37,7 @@ def load_runs(pattern: str = "results/*_s*/metrics.json") -> list[dict]:
     skipped — summarize tolerates a partially-complete results/ directory.
     """
     runs = []
-    for f in sorted(glob(pattern)):
+    for f in sorted(glob(pattern, recursive=True)):
         try:
             with open(f) as fh:
                 d = json.load(fh)
@@ -140,7 +140,7 @@ def build_summary() -> str:
     """Top-level: load everything under results/ and render the summary."""
     runs = load_runs()
     zero_shot = None
-    zs_files = glob("results/zeroshot_*/metrics.json")
+    zs_files = glob("results/**/zeroshot_*/metrics.json", recursive=True)
     if zs_files:
         with open(sorted(zs_files)[0]) as fh:
             zero_shot = json.load(fh)

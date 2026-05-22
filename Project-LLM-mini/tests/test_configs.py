@@ -33,11 +33,18 @@ def test_phase_recipes():
     assert cs["data"]["train_size"] is None
 
 
+def test_run_group_routes_by_regime():
+    assert configs.run_group("lora_mistral7b_boolq_r8_s42") == "tier2-boolq"
+    assert configs.run_group("dora_mistral7b_cs170k_r4_s1") == "tier2-cs170k"
+    assert configs.run_group("dora_mistral7b_boolq_r8") == "tier1"
+
+
 def test_yaml_roundtrip_keeps_lr_a_float(tmp_path):
     # YAML 1.1 parses bare 5e-5 as a string; the generator must avoid that.
     configs.write_configs(tmp_path)
-    files = sorted(tmp_path.glob("*.yaml"))
+    files = sorted(tmp_path.rglob("*.yaml"))
     assert len(files) == 36
+    assert {p.parent.name for p in files} == {"tier2-boolq", "tier2-cs170k"}
     loaded = yaml.safe_load(files[0].read_text())
     assert isinstance(loaded["training"]["learning_rate"], float)
     assert loaded["output"]["run_id"] == files[0].stem

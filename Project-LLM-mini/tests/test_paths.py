@@ -41,18 +41,28 @@ def test_hf_home_returns_path(monkeypatch, tmp_path):
     assert paths.hf_home() == tmp_path
 
 
-def test_results_dir_creates_run_subdir(monkeypatch, tmp_path):
+def test_results_dir_routes_tier2_runs(monkeypatch, tmp_path):
     monkeypatch.setenv("PROJECT_DIR", str(tmp_path))
-    rd = paths.results_dir("foo_run")
-    assert rd == tmp_path / "results" / "foo_run"
+    rd = paths.results_dir("lora_mistral7b_boolq_r8_s42")
+    assert rd == tmp_path / "results" / "tier2-boolq" / "lora_mistral7b_boolq_r8_s42"
+    assert rd.is_dir()
+    rd2 = paths.results_dir("dora_mistral7b_cs170k_r4_s1")
+    assert rd2 == tmp_path / "results" / "tier2-cs170k" / "dora_mistral7b_cs170k_r4_s1"
+    assert rd2.is_dir()
+
+
+def test_results_dir_routes_unseeded_to_tier1(monkeypatch, tmp_path):
+    monkeypatch.setenv("PROJECT_DIR", str(tmp_path))
+    rd = paths.results_dir("dora_mistral7b_boolq_r8")
+    assert rd == tmp_path / "results" / "tier1" / "dora_mistral7b_boolq_r8"
     assert rd.is_dir()
 
 
 def test_results_dir_idempotent_preserves_contents(monkeypatch, tmp_path):
     monkeypatch.setenv("PROJECT_DIR", str(tmp_path))
-    rd1 = paths.results_dir("bar_run")
+    rd1 = paths.results_dir("lora_mistral7b_boolq_r8_s1")
     (rd1 / "sentinel.txt").write_text("keep")
-    rd2 = paths.results_dir("bar_run")
+    rd2 = paths.results_dir("lora_mistral7b_boolq_r8_s1")
     assert rd1 == rd2
     assert rd1.is_dir()
     assert (rd2 / "sentinel.txt").read_text() == "keep"

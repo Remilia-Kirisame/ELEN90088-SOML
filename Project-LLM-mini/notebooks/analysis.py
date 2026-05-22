@@ -25,7 +25,7 @@ from dora_mini import summarize  # noqa: E402
 FIGDIR = Path.cwd().parent / "figures"
 FIGDIR.mkdir(exist_ok=True)
 
-runs = summarize.load_runs(str(Path.cwd().parent / "results" / "*_s*" / "metrics.json"))
+runs = summarize.load_runs(str(Path.cwd().parent / "results" / "**" / "metrics.json"))
 cells = summarize.aggregate(runs)
 print(f"{len(runs)} runs, {len(cells)} cells")
 

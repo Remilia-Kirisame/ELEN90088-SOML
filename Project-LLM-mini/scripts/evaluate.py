@@ -45,7 +45,7 @@ def main() -> int:
         tokenizer = models.load_tokenizer(model_name)
         model = models.load_base_model(model_name, "bfloat16")
         parser, gold_map = _PARSERS["boolq"]   # untuned instruct model answers yes/no
-        run_dir = Path("results/zeroshot_mistral7b_boolq")
+        run_dir = Path("results/tier2-baseline/zeroshot_mistral7b_boolq")
         run_dir.mkdir(parents=True, exist_ok=True)
         metrics: dict = {"run_id": run_dir.name, "model": model_name,
                          "eval_size": args.eval_size}

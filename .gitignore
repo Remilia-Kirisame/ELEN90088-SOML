@@ -50,11 +50,11 @@ Project-LLM-mini/scripts/local/setup_env.sh
 
 # Results: track small text artifacts; ignore heavy ones
 Project-LLM-mini/results/_slurm/
-Project-LLM-mini/results/*/adapter/
-Project-LLM-mini/results/*/checkpoint-*/
-Project-LLM-mini/results/*/trainer_out/
-Project-LLM-mini/results/*/pytorch_model*.bin
-Project-LLM-mini/results/*/*.safetensors
+Project-LLM-mini/results/**/adapter/
+Project-LLM-mini/results/**/checkpoint-*/
+Project-LLM-mini/results/**/trainer_out/
+Project-LLM-mini/results/**/pytorch_model*.bin
+Project-LLM-mini/results/**/*.safetensors
 
 # Figures WIP
 Project-LLM-mini/figures/_wip/

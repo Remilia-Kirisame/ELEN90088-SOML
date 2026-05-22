@@ -17,13 +17,18 @@ import yaml
 from peft import PeftModel
 
 from dora_mini import data, models
-from dora_mini.answer_parsing import parse_true_false, parse_yes_no
+from dora_mini.answer_parsing import parse_yes_no, parse_yes_no_or_true_false
 from dora_mini.eval import evaluate_boolq, evaluate_boolq_generate
 
-# Each phase's model emits answers in its training-set's vocabulary.
+# Each phase's parser is chosen to accept the vocabulary the model is likely to
+# emit. BoolQ models reliably say yes/no. cs170k models are trained to say
+# true/false, but the BoolQ eval prompt instructs yes/no — low-rank cs170k
+# adapters obey the prompt rather than overriding it with training, so we accept
+# both vocabularies (normalized to true/false) to keep the metric a measure of
+# task accuracy rather than format-adaptation strength.
 _PARSERS = {
     "boolq": (parse_yes_no, {True: "yes", False: "no"}),
-    "commonsense_170k": (parse_true_false, {True: "true", False: "false"}),
+    "commonsense_170k": (parse_yes_no_or_true_false, {True: "true", False: "false"}),
 }
 
 

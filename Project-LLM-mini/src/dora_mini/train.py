@@ -51,7 +51,7 @@ def _git_commit() -> str:
 
 
 class _Tee:
-    """Duplicate stdout writes to a log file so results/<run_id>/train.log is committable."""
+    """Duplicate stdout writes to a log file so results/<group>/<run_id>/train.log is committable."""
 
     def __init__(self, *streams):
         self._streams = streams

@@ -1,7 +1,7 @@
 """Generation exact-match eval pass over saved adapters (or the base model).
 
 Adapter run — append eval_accuracy_genmatch to an existing metrics.json:
-    python scripts/evaluate.py --run results/<run_id>
+    python scripts/evaluate.py --run results/<group>/<run_id>
 
 Zero-shot baseline — score the base model, no adapter, write a fresh metrics.json:
     python scripts/evaluate.py --zero-shot --model mistralai/Mistral-7B-Instruct-v0.3
@@ -29,7 +29,7 @@ _PARSERS = {
 
 def main() -> int:
     p = argparse.ArgumentParser()
-    p.add_argument("--run", help="results/<run_id> dir with config.yaml + adapter/.")
+    p.add_argument("--run", help="results/<group>/<run_id> dir with config.yaml + adapter/.")
     p.add_argument("--zero-shot", action="store_true", help="Score the base model, no adapter.")
     p.add_argument("--model", help="Base model name (zero-shot only).")
     p.add_argument("--eval-size", type=int, default=3270)

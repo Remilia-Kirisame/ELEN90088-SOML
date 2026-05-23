@@ -161,9 +161,13 @@ def _interpretation_notes(cells: dict[tuple, dict]) -> list[str]:
         "",
         "On the broad metric, cs170k genmatch decreases slightly with rank (r=4 ~0.85 → r=16 ~0.78–0.82) — opposite to \"more capacity = better\". Reading: cs170k is a multi-task mix (BoolQ is one of 8 tasks); training on it specializes the model *away from pure BoolQ*. At low rank the specialization is mild — the model retains its base BoolQ ability and gets a small boost from training (low-rank trained ~0.85 > zero-shot ~0.82). At high rank the model commits harder to the broader cs170k distribution, sometimes at the cost of BoolQ-specific accuracy (high-rank trained ~0.78 < zero-shot ~0.82). More capacity to learn cs170k means more capacity to drift from BoolQ-optimal behavior.",
         "",
-        "### DoRA vs LoRA on the corrected metric",
+        "### DoRA vs LoRA: task accuracy vs format-adaptation",
         "",
-        "The DoRA−LoRA gap is essentially zero at every rank on both metrics — well within seed std. The Tier-1 / Phase-1 null result reproduces in the multi-task regime that was specifically designed to surface a DoRA advantage. The paper's claim of a particularly large DoRA edge at low rank does not replicate in our setup. DoRA's cost overhead — roughly 3.3× wall-time and 1.8× peak GPU memory vs LoRA at otherwise identical settings — is firmly reconfirmed across both phases.",
+        "**Task accuracy (broad genmatch and likelihood).** The DoRA−LoRA gap is essentially zero at every rank — well within seed std. The Tier-1 / Phase-1 null result reproduces in the multi-task regime that was specifically designed to surface a DoRA advantage; the paper's claim of a particularly large DoRA edge at low rank does not replicate as a task-accuracy improvement in our setup.",
+        "",
+        "**Format-adaptation strength (strict genmatch).** Here DoRA shows a small but direction-consistent edge at r=8 (+0.056) and r=16 (+0.056); both r=4 cells are tied near the floor (~0.10). The seed std on this metric is large (~0.16–0.35 per cell, comparable to the means), so the gap is below statistical significance with n=3 — but the consistent direction matches the spec's central hypothesis: DoRA's magnitude/direction decomposition embeds the cs170k true/false training format more reliably than LoRA. It just doesn't translate into measurable task-accuracy improvement at our 2500-step training budget.",
+        "",
+        "**Cost.** DoRA's overhead — roughly 3.3× wall-time and 1.8× peak GPU memory vs LoRA at otherwise identical settings — is firmly reconfirmed across both phases.",
         "",
     ]
 

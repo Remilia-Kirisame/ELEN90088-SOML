@@ -1,0 +1,8 @@
+{
+  "run_id": "zeroshot_mistral7b_boolq",
+  "model": "mistralai/Mistral-7B-Instruct-v0.3",
+  "eval_size": 3270,
+  "eval_accuracy_likelihood": 0.8235474006116208,
+  "eval_loss": 1.7737293704722026,
+  "eval_accuracy_genmatch": 0.8201834862385321
+}

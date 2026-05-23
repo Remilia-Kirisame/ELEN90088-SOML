@@ -106,6 +106,8 @@ The `setup_env.example.sh` routes:
 
 On a non-SLURM machine you can skip the `sbatch_*.sh` scripts and just run `python scripts/train.py --config <yaml>` directly under your venv.
 
+For **OOD / Code Server / Jupyter** users on a Spartan-style HPC, see [`docs/spartan-ood-setup.md`](docs/spartan-ood-setup.md) for the pre-run text (env vars set before the OOD launcher boots the node) and the rationale (Jupyter kernel env propagation + cache hygiene). Recommended for cache hygiene, required if you'll use Jupyter from inside Code Server.
+
 ## Reproduce the results
 
 The full Tier-2 sweep is 36 training runs (~6 GPU-hours of LoRA + ~25 GPU-hours of DoRA on H100, or ~3× that on A100). Each run produces a `metrics.json` that the summarizer aggregates into `results/SUMMARY.md`.

@@ -5,9 +5,12 @@ final blocks) so train.log is self-readable when committed to git.
 """
 from __future__ import annotations
 
+import io
 import json
 import os
 import platform
+import subprocess
+import sys
 import time
 from pathlib import Path
 
@@ -22,6 +25,8 @@ from transformers import (
 
 from dora_mini import data, models, paths
 
+_MONITOR_EVAL_SIZE = 500  # held-out slice for the in-training loss curve (cheap)
+
 
 def _gpu_info() -> dict:
     if not torch.cuda.is_available():
@@ -33,6 +38,37 @@ def _gpu_info() -> dict:
         "memory_gb": p.total_memory / 1e9,
         "capability": f"{p.major}.{p.minor}",
     }
+
+
+def _git_commit() -> str:
+    """Short HEAD SHA of the producing code, or 'unknown' outside a git checkout."""
+    try:
+        return subprocess.check_output(
+            ["git", "rev-parse", "--short", "HEAD"], stderr=subprocess.DEVNULL, text=True
+        ).strip()
+    except Exception:
+        return "unknown"
+
+
+class _Tee:
+    """Duplicate stdout writes to a log file so results/<group>/<run_id>/train.log is committable."""
+
+    def __init__(self, *streams):
+        self._streams = streams
+
+    def write(self, data):
+        for s in self._streams:
+            s.write(data)
+
+    def flush(self):
+        for s in self._streams:
+            s.flush()
+
+    def isatty(self):
+        return self._streams[0].isatty()
+
+    def fileno(self):
+        raise io.UnsupportedOperation("_Tee has no fileno")
 
 
 def _print_env() -> None:
@@ -86,10 +122,11 @@ def _print_model(cfg: dict, model) -> None:
 
 
 class LossHistoryCallback(TrainerCallback):
-    """Capture per-step training loss for metrics.json."""
+    """Capture per-step training and evaluation loss for metrics.json."""
 
     def __init__(self) -> None:
         self.curve: list[dict] = []
+        self.eval_curve: list[dict] = []
 
     def on_log(self, args, state, control, logs=None, **kwargs):
         if not logs:
@@ -97,6 +134,10 @@ class LossHistoryCallback(TrainerCallback):
         if "loss" in logs:
             self.curve.append(
                 {"step": state.global_step, "loss": float(logs["loss"])}
+            )
+        if "eval_loss" in logs:
+            self.eval_curve.append(
+                {"step": state.global_step, "eval_loss": float(logs["eval_loss"])}
             )
 
 
@@ -106,6 +147,10 @@ def run_training(config_path: str) -> None:
     rdir = paths.results_dir(run_id)
     (rdir / "config.yaml").write_text(yaml.safe_dump(cfg, sort_keys=False))
 
+    _log_file = open(rdir / "train.log", "w", encoding="utf-8")
+    _real_stdout = sys.stdout
+    sys.stdout = _Tee(_real_stdout, _log_file)
+
     _print_env()
     _print_config(cfg)
 
@@ -114,15 +159,32 @@ def run_training(config_path: str) -> None:
     model = models.wrap_peft(base, **cfg["peft"])
     _print_model(cfg, model)
 
-    train_ds = data.load_boolq("train", limit=cfg["data"].get("train_size"))
-    eval_ds = data.load_boolq("validation", limit=cfg["data"].get("eval_size"))
     max_len = cfg["data"]["max_length"]
+    train_dataset = cfg["data"]["train_dataset"]
+    if train_dataset == "boolq":
+        train_ds = data.load_boolq("train", limit=cfg["data"].get("train_size"))
+        train_fmt = data.format_for_training
+    elif train_dataset == "commonsense_170k":
+        cs_path = paths.data_dir() / "commonsense_170k.json"
+        train_ds = data.load_commonsense170k(cs_path, limit=cfg["data"].get("train_size"))
+        train_fmt = data.format_commonsense_for_training
+    else:
+        raise ValueError(f"unknown data.train_dataset: {train_dataset}")
 
     def _fmt_train(ex):
+        return train_fmt(ex, tokenizer, max_length=max_len)
+
+    def _fmt_boolq(ex):
         return data.format_for_training(ex, tokenizer, max_length=max_len)
 
     train_ds = train_ds.map(_fmt_train, remove_columns=train_ds.column_names)
-    eval_for_loss = eval_ds.map(_fmt_train, remove_columns=eval_ds.column_names)
+
+    # In-training loss is monitored on a small BoolQ-val slice (cheap, both phases);
+    # the final accuracy eval uses the full eval_size.
+    monitor_ds = data.load_boolq("validation", limit=_MONITOR_EVAL_SIZE)
+    eval_for_loss = monitor_ds.map(_fmt_boolq, remove_columns=monitor_ds.column_names)
+    # evaluate_boolq formats this internally (format_for_eval); no .map() needed here.
+    final_eval_ds = data.load_boolq("validation", limit=cfg["data"]["eval_size"])
 
     args = TrainingArguments(
         output_dir=str(rdir / "trainer_out"),
@@ -140,7 +202,7 @@ def run_training(config_path: str) -> None:
         seed=cfg["training"]["seed"],
         report_to="none",     # don't auto-init wandb/tensorboard — we write our own metrics.json
         remove_unused_columns=False,
-        disable_tqdm=False,
+        disable_tqdm=True,
     )
     collator = DataCollatorForSeq2Seq(tokenizer)
     history = LossHistoryCallback()
@@ -173,7 +235,7 @@ def run_training(config_path: str) -> None:
     # BoolQ accuracy eval (yes/no likelihood)
     from dora_mini.eval import evaluate_boolq
 
-    eval_metrics = evaluate_boolq(model, tokenizer, eval_ds, max_length=max_len)
+    eval_metrics = evaluate_boolq(model, tokenizer, final_eval_ds, max_length=max_len)
 
     trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
     total = sum(p.numel() for p in model.parameters())
@@ -184,6 +246,7 @@ def run_training(config_path: str) -> None:
     metrics = {
         "run_id": run_id,
         "config_resolved": cfg,
+        "code_commit": _git_commit(),
         "env": {
             "python": platform.python_version(),
             "torch": torch.__version__,
@@ -199,16 +262,20 @@ def run_training(config_path: str) -> None:
         "peak_memory_gb": peak_mem_gb,
         "train_runtime_s": int(finished - started),
         "loss_curve": history.curve,
-        "eval_accuracy": eval_metrics["accuracy"],
+        "eval_loss_curve": history.eval_curve,
+        "eval_accuracy_likelihood": eval_metrics["accuracy"],
         "eval_loss": eval_metrics["loss"],
     }
     (rdir / "metrics.json").write_text(json.dumps(metrics, indent=2))
 
     print("=== final ===", flush=True)
-    print(f"eval_accuracy : {eval_metrics['accuracy']:.4f}")
+    print(f"eval_accuracy_likelihood : {eval_metrics['accuracy']:.4f}")
     print(f"eval_loss     : {eval_metrics['loss']:.4f}")
     print(f"train_runtime : {int(finished - started)} s")
     print(f"peak_mem      : {peak_mem_gb:.1f} GB")
     print(f"trainable_params : {trainable}")
     print(f"slurm_job_id  : {os.environ.get('SLURM_JOB_ID', 'interactive')}")
     print("==========", flush=True)
+
+    sys.stdout = _real_stdout
+    _log_file.close()

@@ -37,9 +37,18 @@ def hf_home() -> Path:
 
 
 def results_dir(run_id: str) -> Path:
-    """Per-run results directory; mkdir parents=True exist_ok=True (idempotent — preserves existing contents)."""
+    """Per-run results dir results/<group>/<run_id>/ (group via configs.run_group); idempotent mkdir."""
     if not run_id or not run_id.strip():
         raise ValueError("run_id must not be empty")
-    d = project_dir() / "results" / run_id
+    from dora_mini.configs import run_group
+
+    d = project_dir() / "results" / run_group(run_id) / run_id
+    d.mkdir(parents=True, exist_ok=True)
+    return d
+
+
+def data_dir() -> Path:
+    """Local data directory (e.g. commonsense_170k.json); gitignored. Created if absent."""
+    d = project_dir() / "data"
     d.mkdir(parents=True, exist_ok=True)
     return d

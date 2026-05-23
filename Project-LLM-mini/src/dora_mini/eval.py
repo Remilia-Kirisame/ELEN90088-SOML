@@ -6,6 +6,8 @@ and avoids decoding nondeterminism.
 """
 from __future__ import annotations
 
+import sys
+
 import torch
 from torch.nn.functional import log_softmax
 from tqdm import tqdm
@@ -42,7 +44,60 @@ def evaluate_boolq(model, tokenizer, dataset, max_length: int = 512) -> dict:
 
         correct += int(pred == formatted["label"])
         total += 1
-        # Absolute NLL here can look high (e.g. 10+) even when accuracy is ~88%: the model puts mass on other continuations (formatting tokens, spaces) before the actual yes/no token. The relative comparison above is what determines correctness — use accuracy as the headline metric.
+        # Absolute NLL here can look high (e.g. 10+) even when accuracy is ~88%: the model puts mass on other continuations (formatting tokens, spaces) before the actual yes/no token. For cs170k-trained adapters the NLL is higher and *rises* with training step — the adapter learns to emit "true/false" rather than "yes/no", so probability mass on the yes/no token falls further as training proceeds. The relative yes-vs-no comparison above still determines correctness — use accuracy as the headline metric.
         nll_sum += -(score_yes if formatted["label"] == 1 else score_no)
 
     return {"accuracy": correct / total, "loss": nll_sum / total}
+
+
+@torch.no_grad()
+def evaluate_boolq_generate(
+    model,
+    tokenizer,
+    dataset,
+    parser,
+    gold_map,
+    max_length: int = 512,
+    max_new_tokens: int = 8,
+    debug_print: int = 0,
+) -> dict:
+    """BoolQ accuracy via greedy generation + exact-match (the paper-style metric).
+
+    `parser`: callable(text) -> extracted label string or None.
+    `gold_map`: maps the BoolQ bool answer to the label string `parser` yields,
+    e.g. {True: "yes", False: "no"} for a Yes/No-trained model.
+    `debug_print`: print raw (gen_text, parsed, gold, match) for the first N examples to stderr; 0 disables (default).
+
+    Unparseable generations score as wrong — this metric is sensitive to the
+    format/training-stability collapse that likelihood scoring is blind to.
+    """
+    model.eval()
+    device = next(model.parameters()).device
+
+    correct = 0
+    total = 0
+    for i, ex in enumerate(tqdm(dataset, desc="gen-eval")):
+        formatted = data.format_for_eval(ex, tokenizer, max_length=max_length)
+        input_ids = torch.tensor([formatted["input_ids"]], device=device)
+        attention_mask = torch.tensor([formatted["attention_mask"]], device=device)
+        out = model.generate(
+            input_ids=input_ids,
+            attention_mask=attention_mask,
+            max_new_tokens=max_new_tokens,
+            do_sample=False,
+            pad_token_id=tokenizer.pad_token_id,
+        )
+        gen_text = tokenizer.decode(
+            out[0, input_ids.shape[1]:], skip_special_tokens=True
+        )
+        pred = parser(gen_text)
+        gold = gold_map[bool(ex["answer"])]
+        correct += int(pred == gold)
+        if i < debug_print:
+            print(
+                f"[debug ex {i}] gen={gen_text!r} parsed={pred!r} gold={gold!r} match={pred == gold}",
+                file=sys.stderr,
+            )
+        total += 1
+
+    return {"genmatch_accuracy": correct / total}

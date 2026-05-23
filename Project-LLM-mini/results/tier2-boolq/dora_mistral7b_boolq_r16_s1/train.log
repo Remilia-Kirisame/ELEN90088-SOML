@@ -1,0 +1,61 @@
+=== env ===
+python  : 3.10.20
+torch   : 2.6.0+cu124
+transformers : 4.57.6
+peft    : 0.19.1
+device  : cuda:0 (NVIDIA H100 80GB HBM3, cc 9.0, 84.9 GB)
+slurm   : job 25289490 on spartan-gpgpu175.hpc.unimelb.edu.au
+==========
+=== config ===
+model:
+  name: mistralai/Mistral-7B-Instruct-v0.3
+  dtype: bfloat16
+peft:
+  method: dora
+  r: 16
+  alpha: 32
+  target_modules: all-linear
+  dropout: 0.05
+data:
+  train_dataset: boolq
+  train_size: null
+  eval_size: 3270
+  max_length: 512
+training:
+  batch_size: 4
+  grad_accum: 4
+  learning_rate: 5.0e-05
+  num_steps: 500
+  warmup_steps: 50
+  eval_every: 100
+  seed: 1
+output:
+  run_id: dora_mistral7b_boolq_r16_s1
+==========
+=== model ===
+base       : mistralai/Mistral-7B-Instruct-v0.3
+peft       : DORA (r=16, alpha=32, target=all-linear)
+trainable  : 43,319,296 / 7,291,342,848  (0.594%)
+mem before : 14.7 / 84.9 GB (gpu allocated)
+==========
+=== training start 2026-05-22T08:36:40Z ===
+{'loss': 1.0057, 'grad_norm': 11.739492416381836, 'learning_rate': 4.4555555555555555e-05, 'epoch': 0.1697072549851506}
+{'eval_loss': 0.207245871424675, 'eval_runtime': 34.6701, 'eval_samples_per_second': 14.422, 'eval_steps_per_second': 3.605, 'epoch': 0.1697072549851506}
+{'loss': 0.1686, 'grad_norm': 4.658447265625, 'learning_rate': 3.3444444444444443e-05, 'epoch': 0.3394145099703012}
+{'eval_loss': 0.14184460043907166, 'eval_runtime': 34.6672, 'eval_samples_per_second': 14.423, 'eval_steps_per_second': 3.606, 'epoch': 0.3394145099703012}
+{'loss': 0.1361, 'grad_norm': 3.6050946712493896, 'learning_rate': 2.2333333333333335e-05, 'epoch': 0.5091217649554518}
+{'eval_loss': 0.13351577520370483, 'eval_runtime': 34.6783, 'eval_samples_per_second': 14.418, 'eval_steps_per_second': 3.605, 'epoch': 0.5091217649554518}
+{'loss': 0.1303, 'grad_norm': 4.354274749755859, 'learning_rate': 1.1222222222222224e-05, 'epoch': 0.6788290199406024}
+{'eval_loss': 0.1280701905488968, 'eval_runtime': 34.6699, 'eval_samples_per_second': 14.422, 'eval_steps_per_second': 3.605, 'epoch': 0.6788290199406024}
+{'loss': 0.1158, 'grad_norm': 3.4770824909210205, 'learning_rate': 1.1111111111111112e-07, 'epoch': 0.8485362749257531}
+{'eval_loss': 0.11973711848258972, 'eval_runtime': 34.6808, 'eval_samples_per_second': 14.417, 'eval_steps_per_second': 3.604, 'epoch': 0.8485362749257531}
+{'train_runtime': 1183.0161, 'train_samples_per_second': 6.762, 'train_steps_per_second': 0.423, 'train_loss': 0.31126770782470703, 'epoch': 0.8485362749257531}
+=== training end 2026-05-22T08:56:23Z (1183 s) ===
+=== final ===
+eval_accuracy_likelihood : 0.8896
+eval_loss     : 9.4157
+train_runtime : 1183 s
+peak_mem      : 59.9 GB
+trainable_params : 43319296
+slurm_job_id  : 25289490
+==========

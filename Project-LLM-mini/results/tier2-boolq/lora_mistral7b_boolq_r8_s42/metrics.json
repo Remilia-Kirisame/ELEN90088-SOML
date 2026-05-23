@@ -1,0 +1,96 @@
+{
+  "run_id": "lora_mistral7b_boolq_r8_s42",
+  "config_resolved": {
+    "model": {
+      "name": "mistralai/Mistral-7B-Instruct-v0.3",
+      "dtype": "bfloat16"
+    },
+    "peft": {
+      "method": "lora",
+      "r": 8,
+      "alpha": 16,
+      "target_modules": "all-linear",
+      "dropout": 0.05
+    },
+    "data": {
+      "train_dataset": "boolq",
+      "train_size": null,
+      "eval_size": 3270,
+      "max_length": 512
+    },
+    "training": {
+      "batch_size": 4,
+      "grad_accum": 4,
+      "learning_rate": 5e-05,
+      "num_steps": 500,
+      "warmup_steps": 50,
+      "eval_every": 100,
+      "seed": 42
+    },
+    "output": {
+      "run_id": "lora_mistral7b_boolq_r8_s42"
+    }
+  },
+  "code_commit": "6d3becf",
+  "env": {
+    "python": "3.10.20",
+    "torch": "2.6.0+cu124",
+    "transformers": "4.57.6",
+    "peft": "0.19.1",
+    "gpu": "NVIDIA H100 80GB HBM3"
+  },
+  "slurm_job_id": "25289073",
+  "started_at": "2026-05-22T08:12:53Z",
+  "finished_at": "2026-05-22T08:18:58Z",
+  "trainable_params": 20971520,
+  "trainable_pct": 0.2885064550501872,
+  "peak_memory_gb": 33.53810688,
+  "train_runtime_s": 364,
+  "loss_curve": [
+    {
+      "step": 100,
+      "loss": 1.309
+    },
+    {
+      "step": 200,
+      "loss": 0.1653
+    },
+    {
+      "step": 300,
+      "loss": 0.1354
+    },
+    {
+      "step": 400,
+      "loss": 0.1296
+    },
+    {
+      "step": 500,
+      "loss": 0.1263
+    }
+  ],
+  "eval_loss_curve": [
+    {
+      "step": 100,
+      "eval_loss": 0.15980938076972961
+    },
+    {
+      "step": 200,
+      "eval_loss": 0.15606290102005005
+    },
+    {
+      "step": 300,
+      "eval_loss": 0.1548652946949005
+    },
+    {
+      "step": 400,
+      "eval_loss": 0.12567777931690216
+    },
+    {
+      "step": 500,
+      "eval_loss": 0.12105554342269897
+    }
+  ],
+  "eval_accuracy_likelihood": 0.8798165137614679,
+  "eval_loss": 9.495857670256122,
+  "eval_accuracy_genmatch": 0.9027522935779817
+}

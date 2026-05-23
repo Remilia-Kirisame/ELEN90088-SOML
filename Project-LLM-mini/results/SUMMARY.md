@@ -1,72 +1,90 @@
-# Tier 1 results summary
+# Tier 2 results summary
 
-Generated 2026-05-16 (UTC) from `results/*_*/metrics.json` by `scripts/summarize_results.py`. 6 runs: LoRA vs DoRA at r ∈ {4, 8, 16} on BoolQ + Mistral-7B-Instruct-v0.3.
+## Zero-shot baseline (Mistral-7B-Instruct, no adapter)
 
-## Per-run table
+- likelihood accuracy: 0.8235
+- genmatch accuracy:   0.8202
 
-| run_id | method | r | α | α/r | trainable | % of full | accuracy | NLL (yes/no) | runtime (s) | runtime (min) | peak mem (GB) | slurm job | started (UTC) | finished (UTC) |
-|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|---|
-| `dora_mistral7b_boolq_r4` | DORA | 4 | 8 | 2 | 11,862,016 | 0.163% | 0.8740 | 10.6741 | 1183 | 19.7 | 59.4 | `25035695` | 2026-05-16 13:21 UTC | 2026-05-16 13:41 UTC |
-| `dora_mistral7b_boolq_r8` | DORA | 8 | 16 | 2 | 22,347,776 | 0.307% | 0.8880 | 11.0463 | 1167 | 19.4 | 59.6 | `25031133` | 2026-05-16 11:10 UTC | 2026-05-16 11:30 UTC |
-| `dora_mistral7b_boolq_r16` | DORA | 16 | 32 | 2 | 43,319,296 | 0.594% | 0.8800 | 11.4465 | 1164 | 19.4 | 59.9 | `25035696` | 2026-05-16 13:27 UTC | 2026-05-16 13:46 UTC |
-| `lora_mistral7b_boolq_r4` | LORA | 4 | 8 | 2 | 10,485,760 | 0.144% | 0.8800 | 10.2051 | 364 | 6.1 | 33.3 | `25035693` | 2026-05-16 13:11 UTC | 2026-05-16 13:17 UTC |
-| `lora_mistral7b_boolq_r8` | LORA | 8 | 16 | 2 | 20,971,520 | 0.289% | 0.8820 | 10.7806 | 353 | 5.9 | 33.5 | `25028853` | 2026-05-16 10:04 UTC | 2026-05-16 10:09 UTC |
-| `lora_mistral7b_boolq_r16` | LORA | 16 | 32 | 2 | 41,943,040 | 0.575% | 0.8840 | 11.6086 | 357 | 6.0 | 33.9 | `25035694` | 2026-05-16 13:20 UTC | 2026-05-16 13:25 UTC |
+## Per-cell results (mean +/- std over 3 seeds)
 
-## DoRA − LoRA accuracy gap by rank
+| trainset | method | r | n | likelihood acc | genmatch (broad) | genmatch (strict) | runtime (s) | peak mem (GB) |
+|---|---|---:|---:|---:|---:|---:|---:|---:|
+| boolq | DORA | 4 | 3 | 0.8742 +/- 0.0067 | 0.8927 +/- 0.0011 | - | 1189 | 59.4 |
+| boolq | DORA | 8 | 3 | 0.8797 +/- 0.0079 | 0.8967 +/- 0.0026 | - | 1181 | 59.6 |
+| boolq | DORA | 16 | 3 | 0.8811 +/- 0.0081 | 0.8991 +/- 0.0008 | - | 1181 | 59.9 |
+| boolq | LORA | 4 | 3 | 0.8780 +/- 0.0040 | 0.8939 +/- 0.0021 | - | 361 | 33.3 |
+| boolq | LORA | 8 | 3 | 0.8803 +/- 0.0106 | 0.8987 +/- 0.0036 | - | 361 | 33.5 |
+| boolq | LORA | 16 | 3 | 0.8792 +/- 0.0043 | 0.8996 +/- 0.0026 | - | 356 | 33.9 |
+| cs170k | DORA | 4 | 3 | 0.7499 +/- 0.0851 | 0.8499 +/- 0.0055 | 0.0980 +/- 0.0792 | 5474 | 59.4 |
+| cs170k | DORA | 8 | 3 | 0.8140 +/- 0.0244 | 0.8403 +/- 0.0144 | 0.3183 +/- 0.1952 | 5429 | 59.6 |
+| cs170k | DORA | 16 | 3 | 0.7294 +/- 0.0903 | 0.7844 +/- 0.0135 | 0.6296 +/- 0.2627 | 5426 | 59.9 |
+| cs170k | LORA | 4 | 3 | 0.7788 +/- 0.0723 | 0.8485 +/- 0.0025 | 0.1069 +/- 0.1657 | 1653 | 33.3 |
+| cs170k | LORA | 8 | 3 | 0.8103 +/- 0.0131 | 0.8377 +/- 0.0009 | 0.2624 +/- 0.3501 | 1611 | 33.5 |
+| cs170k | LORA | 16 | 3 | 0.7835 +/- 0.0131 | 0.8159 +/- 0.0189 | 0.5742 +/- 0.2282 | 1603 | 33.9 |
 
-| r | LoRA accuracy | DoRA accuracy | Δ (DoRA − LoRA) |
+### boolq - DoRA - LoRA gap (likelihood)
+
+| r | LoRA | DoRA | delta (DoRA - LoRA) |
 |---:|---:|---:|---:|
-| 4 | 0.8800 | 0.8740 | -0.0060 |
-| 8 | 0.8820 | 0.8880 | +0.0060 |
-| 16 | 0.8840 | 0.8800 | -0.0040 |
+| 4 | 0.8780 +/- 0.0040 | 0.8742 +/- 0.0067 | -0.0038 |
+| 8 | 0.8803 +/- 0.0106 | 0.8797 +/- 0.0079 | -0.0006 |
+| 16 | 0.8792 +/- 0.0043 | 0.8811 +/- 0.0081 | +0.0019 |
 
-## Cost ratios (DoRA vs LoRA at the same r)
+### boolq - DoRA - LoRA gap (genmatch)
 
-| r | runtime ratio | peak mem ratio | param overhead (DoRA − LoRA) |
+| r | LoRA | DoRA | delta (DoRA - LoRA) |
 |---:|---:|---:|---:|
-| 4 | 3.25× | 1.78× | +1,376,256 |
-| 8 | 3.31× | 1.78× | +1,376,256 |
-| 16 | 3.26× | 1.77× | +1,376,256 |
+| 4 | 0.8939 +/- 0.0021 | 0.8927 +/- 0.0011 | -0.0012 |
+| 8 | 0.8987 +/- 0.0036 | 0.8967 +/- 0.0026 | -0.0019 |
+| 16 | 0.8996 +/- 0.0026 | 0.8991 +/- 0.0008 | -0.0005 |
 
-## Per-step training loss
+### cs170k - DoRA - LoRA gap (likelihood)
 
-| run_id | step 100 | step 200 | step 300 | step 400 | step 500 |
-|---|---:|---:|---:|---:|---:|
-| `dora_mistral7b_boolq_r4` | 1.4131 | 0.1148 | 0.0592 | 0.0247 | 0.0036 |
-| `dora_mistral7b_boolq_r8` | 1.1713 | 0.1151 | 0.0381 | 0.0169 | 0.0041 |
-| `dora_mistral7b_boolq_r16` | 0.9808 | 0.1135 | 0.0249 | 0.0115 | 0.0019 |
-| `lora_mistral7b_boolq_r4` | 1.5528 | 0.1212 | 0.0614 | 0.0285 | 0.0039 |
-| `lora_mistral7b_boolq_r8` | 1.3084 | 0.1096 | 0.0441 | 0.0138 | 0.0028 |
-| `lora_mistral7b_boolq_r16` | 1.0652 | 0.1047 | 0.0313 | 0.0042 | 0.0013 |
+| r | LoRA | DoRA | delta (DoRA - LoRA) |
+|---:|---:|---:|---:|
+| 4 | 0.7788 +/- 0.0723 | 0.7499 +/- 0.0851 | -0.0288 |
+| 8 | 0.8103 +/- 0.0131 | 0.8140 +/- 0.0244 | +0.0037 |
+| 16 | 0.7835 +/- 0.0131 | 0.7294 +/- 0.0903 | -0.0541 |
 
-## Shared configuration
+### cs170k - DoRA - LoRA gap (genmatch)
 
-- **Model:** `mistralai/Mistral-7B-Instruct-v0.3` (bfloat16)
-- **Dataset:** `boolq` (train_size=2000, eval_size=500, max_length=512)
-- **PEFT:** `target_modules=all-linear`, `dropout=0.05` (r and α vary per run)
-- **Training:** batch_size=4 × grad_accum=4 (effective batch = 16), lr=5e-05, num_steps=500, warmup_steps=50, seed=42
+| r | LoRA | DoRA | delta (DoRA - LoRA) |
+|---:|---:|---:|---:|
+| 4 | 0.8485 +/- 0.0025 | 0.8499 +/- 0.0055 | +0.0014 |
+| 8 | 0.8377 +/- 0.0009 | 0.8403 +/- 0.0144 | +0.0025 |
+| 16 | 0.8159 +/- 0.0189 | 0.7844 +/- 0.0135 | -0.0315 |
 
-## Environment
+### cs170k - DoRA - LoRA gap (genmatch_strict)
 
-- Python 3.10.20 · torch 2.6.0+cu124 · transformers 4.57.6 · peft 0.19.1
-- GPU: NVIDIA H100 80GB HBM3 (Spartan `gpu-h100` partition)
+| r | LoRA | DoRA | delta (DoRA - LoRA) |
+|---:|---:|---:|---:|
+| 4 | 0.1069 +/- 0.1657 | 0.0980 +/- 0.0792 | -0.0089 |
+| 8 | 0.2624 +/- 0.3501 | 0.3183 +/- 0.1952 | +0.0559 |
+| 16 | 0.5742 +/- 0.2282 | 0.6296 +/- 0.2627 | +0.0555 |
 
-## Statistical caveat
+## Notes on interpretation
 
-Single seed per config, `eval_size=500`. Binomial standard error on a single accuracy measurement at $p \approx 0.88$:
+### Two views of cs170k genmatch: broad parser vs strict parser
 
-$$
-\mathrm{SE} = \sqrt{\frac{p(1-p)}{n}} = \sqrt{\frac{0.88 \cdot 0.12}{500}} \approx 0.0145
-$$
+`genmatch (broad)` accepts either yes/no or true/false (normalized to true/false). It measures whether the model emits a parseable answer matching the gold label — i.e. task accuracy via free generation. `genmatch (strict)` only accepts literal true/false; it scores zero when the model obeys the BoolQ eval prompt's yes/no instruction and emits yes/no. So the strict view is a *format-adaptation strength* metric: how strongly the adapter has overridden the prompt with cs170k's true/false training format.
 
-So per-measurement SE ≈ ±1.45 pp at 1σ, ±2.9 pp at 2σ. Every observed LoRA-vs-DoRA gap in our table (≤ 0.6 pp) is well inside one SE — cannot be statistically distinguished from zero without multiple seeds.
+The strict column shows a clean rank-stratified pattern (low at r=4, much higher at r=16) reflecting that higher-rank adapters have the capacity to lock in the cs170k format while low-rank ones lack that capacity and default to the prompt's yes/no. Diagnostic spot-checks (raw generations of 4 representative runs) confirm this: low-rank cs170k models emit `"the correct answer is yes/no"` ~90% of the time; high-rank ones emit `"the correct answer is true/false"`. Both are answering correctly; the difference is surface form.
+
+### Inverse-rank trend on broad genmatch
+
+On the broad metric, cs170k genmatch decreases slightly with rank (r=4 ~0.85 → r=16 ~0.78–0.82) — opposite to "more capacity = better". Reading: cs170k is a multi-task mix (BoolQ is one of 8 tasks); training on it specializes the model *away from pure BoolQ*. At low rank the specialization is mild — the model retains its base BoolQ ability and gets a small boost from training (low-rank trained ~0.85 > zero-shot ~0.82). At high rank the model commits harder to the broader cs170k distribution, sometimes at the cost of BoolQ-specific accuracy (high-rank trained ~0.78 < zero-shot ~0.82). More capacity to learn cs170k means more capacity to drift from BoolQ-optimal behavior.
+
+### DoRA vs LoRA: task accuracy vs format-adaptation
+
+**Task accuracy (broad genmatch and likelihood).** The DoRA−LoRA gap is within seed std at every rank in the BoolQ regime and at r ∈ {4, 8} in cs170k. The exception is cs170k r=16: broad-genmatch shows DoRA −0.032 below LoRA, direction-consistent across all 3 seeds (gap exceeds seed std ~0.013–0.019, though n=3 is not enough for formal significance); the likelihood gap at the same cell (−0.054) is within DoRA's wide seed std at r=16 (0.090). The Tier-1 / Phase-1 null result largely reproduces in the multi-task regime that was specifically designed to surface a DoRA advantage; the paper's claim of a particularly large DoRA edge at low rank does not replicate as a task-accuracy improvement in our setup.
+
+**Format-adaptation strength (strict genmatch).** Here DoRA shows a small but direction-consistent edge at r=8 (+0.056) and r=16 (+0.056); both r=4 cells are tied near the floor (~0.10). The seed std on this metric is large (~0.16–0.35 per cell, comparable to the means), so the gap is below statistical significance with n=3 — but the consistent direction matches the spec's central hypothesis: DoRA's magnitude/direction decomposition embeds the cs170k true/false training format more reliably than LoRA. It just doesn't translate into measurable task-accuracy improvement at our 2500-step training budget.
+
+**Cost.** DoRA's overhead — roughly 3.3× wall-time and 1.8× peak GPU memory vs LoRA at otherwise identical settings — is firmly reconfirmed across both phases.
 
 ## How to regenerate
 
 ```bash
 cd Project-LLM-mini && python scripts/summarize_results.py > results/SUMMARY.md
 ```
-
-Re-run after adding new entries under `results/<run_id>/metrics.json`; the script picks up new runs by glob.
 

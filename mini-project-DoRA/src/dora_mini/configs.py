@@ -135,7 +135,7 @@ TIER3_PHASES = {
         "eval_every": 400,
     },
 }
-TIER3_SEEDS = [42, 1, 2, 3]
+TIER3_SEEDS = [114, 514, 1919, 810]
 
 
 def build_tier3_config(method: str, rank: int, seed: int, phase: str = "cs170k") -> tuple[str, dict]:

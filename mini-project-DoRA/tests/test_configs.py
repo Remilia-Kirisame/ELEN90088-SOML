@@ -57,8 +57,10 @@ def test_yaml_roundtrip_keeps_lr_a_float(tmp_path):
 
 
 def test_run_group_routes_tier3_runs():
-    assert configs.run_group("lora_mistral7b_cs170k_r4_s42_t3") == "tier3-cs170k"
-    assert configs.run_group("dora_mistral7b_cs170k_r16_s3_t3") == "tier3-cs170k"
+    # Routing depends only on the `_t3` tail, not seed value — but use real
+    # sweep seeds in the fixtures to keep the test self-documenting.
+    assert configs.run_group("lora_mistral7b_cs170k_r4_s114_t3") == "tier3-cs170k"
+    assert configs.run_group("dora_mistral7b_cs170k_r16_s1919_t3") == "tier3-cs170k"
 
 
 def test_run_group_tier2_unchanged_after_t3_regex():
@@ -81,7 +83,7 @@ def test_tier3_run_ids_all_carry_t3_suffix():
 
 def test_tier3_recipe_values():
     cfgs = configs.all_tier3_configs()
-    cs = cfgs["lora_mistral7b_cs170k_r8_s42_t3"]
+    cs = cfgs["lora_mistral7b_cs170k_r8_s114_t3"]
     assert cs["training"]["num_steps"] == 10000
     assert cs["training"]["warmup_steps"] == 400
     assert cs["training"]["eval_every"] == 400
@@ -91,9 +93,9 @@ def test_tier3_recipe_values():
     assert cs["data"]["train_size"] is None
 
 
-def test_tier3_seed_set_includes_new_seed():
+def test_tier3_seed_set_matches_recipe():
     seeds = {cfg["training"]["seed"] for cfg in configs.all_tier3_configs().values()}
-    assert seeds == {42, 1, 2, 3}
+    assert seeds == {114, 514, 1919, 810}
 
 
 def test_tier3_alpha_is_twice_rank():

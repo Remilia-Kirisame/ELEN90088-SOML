@@ -60,8 +60,8 @@ def test_results_dir_routes_unseeded_to_tier1(monkeypatch, tmp_path):
 
 def test_results_dir_routes_tier3_runs(monkeypatch, tmp_path):
     monkeypatch.setenv("PROJECT_DIR", str(tmp_path))
-    rd = paths.results_dir("dora_mistral7b_cs170k_r4_s42_t3")
-    assert rd == tmp_path / "results" / "tier3-cs170k" / "dora_mistral7b_cs170k_r4_s42_t3"
+    rd = paths.results_dir("dora_mistral7b_cs170k_r4_s114_t3")
+    assert rd == tmp_path / "results" / "tier3-cs170k" / "dora_mistral7b_cs170k_r4_s114_t3"
     assert rd.is_dir()
 
 

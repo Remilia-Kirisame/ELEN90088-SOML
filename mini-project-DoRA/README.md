@@ -26,7 +26,7 @@ mini-project-DoRA/
 ├── pyproject.toml, uv.lock, .python-version    # uv project metadata (torch+cu124 pinned for Linux GPU)
 ├── DoRA_REFERENCE.md                            # paper link + upstream commit pin
 ├── src/dora_mini/                               # importable Python package
-│   ├── paths.py            # env-var path helpers (SPARTAN_PROJECT_DIR, HF_HOME, etc.)
+│   ├── paths.py            # env-var path helpers (PROJECT_DIR, UV_PROJECT_ENVIRONMENT, HF_HOME)
 │   ├── configs.py          # single source of truth for the 36-run Tier-2 sweep grid
 │   ├── data.py             # BoolQ + commonsense_170k loaders + chat-template formatting
 │   ├── answer_parsing.py   # parse_yes_no, parse_true_false, parse_yes_no_or_true_false
@@ -75,7 +75,7 @@ The observed peaks on Spartan H100 (from `results/SUMMARY.md`):
 - **GPU VRAM:** ~60 GB peak for DoRA training (any rank, both regimes); ~34 GB peak for LoRA. **Will not fit on consumer GPUs** (24 GB RTX 4090 / A10G); you need H100 80 GB, A100 80 GB, H200, or equivalent. LoRA-only experiments fit comfortably on 40 GB A100 / L40S.
 - **CUDA driver:** 12.4-compatible (matches the pinned `torch==2.6.0+cu124` wheel). Older drivers (12.0–12.3) fail at `import torch` with a cryptic CUDA-version mismatch.
 - **System RAM:** ≥ 32 GB. Headroom is mainly for the HF dataloader; the sbatch template requests 32 GB.
-- **Disk:** ~25 GB for the Mistral-7B-Instruct weights (HF cache), ~150 MB for `commonsense_170k.json`, plus a few GB for adapters + logs. Route these to project storage, not `$HOME` — see [`docs/spartan-ood-setup.md`](docs/spartan-ood-setup.md).
+- **Disk:** ~15 GB for the Mistral-7B-Instruct weights (HF cache, bfloat16), ~150 MB for `commonsense_170k.json`, plus a few GB for adapters + logs. Route these to project storage, not `$HOME` — see [`docs/spartan-ood-setup.md`](docs/spartan-ood-setup.md).
 - **Time:** the full 36-run sweep takes **~22 GPU-hours of training + ~3 GPU-hours of eval = ~25 GPU-hours on H100** (~3× on A100). Per-run: LoRA ~6 min BoolQ / ~27 min cs170k; DoRA ~20 min BoolQ / ~90 min cs170k.
 
 The Mac-side smoke test has no GPU requirement.
@@ -182,7 +182,12 @@ For the zero-shot baseline (base Mistral-Instruct, no adapter):
 python scripts/evaluate.py --zero-shot --model mistralai/Mistral-7B-Instruct-v0.3
 ```
 
-Use `python scripts/evaluate.py --debug-print 10` to inspect raw model outputs without writing metrics — useful for the parser-vs-real-collapse diagnostic that surfaced our two-views finding.
+To inspect raw model outputs without writing metrics (useful for the parser-vs-real-collapse diagnostic that surfaced our two-views finding), add `--debug-print N` to either form above:
+
+```bash
+python scripts/evaluate.py --run results/tier2-cs170k/<run_id> --debug-print 10
+python scripts/evaluate.py --zero-shot --model mistralai/Mistral-7B-Instruct-v0.3 --debug-print 10
+```
 
 ### Step 4 — Aggregate into SUMMARY.md
 
@@ -205,7 +210,7 @@ Outputs land in `figures/rank_sensitivity.png`, `figures/format_adaptation.png`,
 
 ## Methodology brief
 
-- **Base model:** `mistralai/Mistral-7B-Instruct-v0.2`. Not the paper's LLaMA-base. This is a deliberate generalization test: does the paper's claim survive on a different base?
+- **Base model:** `mistralai/Mistral-7B-Instruct-v0.3`. Not the paper's LLaMA-base. This is a deliberate generalization test: does the paper's claim survive on a different base?
 - **PEFT library:** HuggingFace `peft` ≥0.13 with `LoraConfig(use_dora=True)` for DoRA. We do *not* use the upstream paper's bundled custom PEFT fork — see [DoRA_REFERENCE.md](DoRA_REFERENCE.md).
 - **Sweep grid:** 2 methods (LoRA, DoRA) × 3 ranks (4, 8, 16) × 3 seeds (42, 1, 2) × 2 regimes (BoolQ, cs170k) = 36 runs. $\alpha/r = 2$ throughout (paper convention).
 - **Two regimes:**
@@ -235,7 +240,7 @@ A few things worth knowing before you try to bit-reproduce numbers.
 - **DoRA paper:** Shih-Yang Liu, Chien-Yi Wang, Hongxu Yin, Pavlo Molchanov, Yu-Chiang Frank Wang, Kwang-Ting Cheng, Min-Hung Chen. *DoRA: Weight-Decomposed Low-Rank Adaptation.* ICML 2024. [arXiv:2402.09353](https://arxiv.org/abs/2402.09353).
 - **Upstream code:** [NVlabs/DoRA](https://github.com/NVlabs/DoRA), commit `7e2f10a` pinned for traceability. Their custom PEFT fork is *not* used at runtime; we use HuggingFace `peft`'s `use_dora=True` flag.
 - **Datasets:** [`google/boolq`](https://huggingface.co/datasets/google/boolq) (Clark et al., 2019); [`commonsense_170k`](https://github.com/AGI-Edgerunners/LLM-Adapters/tree/main/ft-training_set) via the LLM-Adapters mix.
-- **Libraries:** `transformers`, `peft`, `accelerate`, `datasets`, `trl` (HuggingFace); `bitsandbytes`; `torch`. Versions pinned in `pyproject.toml` + `uv.lock`.
+- **Libraries:** `transformers`, `peft`, `accelerate`, `datasets` (HuggingFace); `bitsandbytes`; `torch`. Versions pinned in `pyproject.toml` + `uv.lock`.
 - **Compute:** University of Melbourne Research Computing Services (Spartan HPC), gpu-h100 partition.
 - **Course:** ELEN90088 System Optimisation and Machine Learning, UniMelb, Semester 1 2026.
 

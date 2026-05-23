@@ -85,6 +85,6 @@ On the broad metric, cs170k genmatch decreases slightly with rank (r=4 ~0.85 →
 ## How to regenerate
 
 ```bash
-cd Project-LLM-mini && python scripts/summarize_results.py > results/SUMMARY.md
+cd mini-project-DoRA && python scripts/summarize_results.py > results/SUMMARY.md
 ```
 

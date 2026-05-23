@@ -22,7 +22,7 @@ def _require_env(name: str) -> str:
 
 
 def project_dir() -> Path:
-    """Root of the mini-project working tree (e.g. ~/ELEN90088-SOML/Project-LLM-mini)."""
+    """Root of the mini-project working tree (e.g. ~/ELEN90088-SOML/mini-project-DoRA)."""
     return Path(_require_env("PROJECT_DIR"))
 
 

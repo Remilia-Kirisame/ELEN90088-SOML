@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Aggregate Tier-2 run results into results/SUMMARY.md.
 
-Run from the Project-LLM-mini root:
+Run from the mini-project-DoRA root:
 
     python scripts/summarize_results.py > results/SUMMARY.md
 """

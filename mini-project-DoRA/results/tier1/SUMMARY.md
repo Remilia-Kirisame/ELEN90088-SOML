@@ -65,7 +65,7 @@ So per-measurement SE ≈ ±1.45 pp at 1σ, ±2.9 pp at 2σ. Every observed LoRA
 ## How to regenerate
 
 ```bash
-cd Project-LLM-mini && python scripts/summarize_results.py > results/SUMMARY.md
+cd mini-project-DoRA && python scripts/summarize_results.py > results/SUMMARY.md
 ```
 
 Re-run after adding new entries under `results/<run_id>/metrics.json`; the script picks up new runs by glob.

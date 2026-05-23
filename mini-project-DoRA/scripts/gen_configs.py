@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate the 36 Tier-2 experiment configs. Run from the Project-LLM-mini root:
+"""Generate the 36 Tier-2 experiment configs. Run from the mini-project-DoRA root:
 
     python scripts/gen_configs.py
 """

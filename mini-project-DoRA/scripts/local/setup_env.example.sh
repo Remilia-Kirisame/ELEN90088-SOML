@@ -10,7 +10,7 @@
 # Placeholders below: replace <your-project-id> with your shared HPC allocation id.
 
 # Code lives in $HOME (repo clone)
-export PROJECT_DIR="$HOME/ELEN90088-SOML/Project-LLM-mini"
+export PROJECT_DIR="$HOME/ELEN90088-SOML/mini-project-DoRA"
 
 # Bulky data lives in project storage (HOME is quota-limited)
 export PUNIM_MINI="/data/gpfs/projects/<your-project-id>/dora-mini"

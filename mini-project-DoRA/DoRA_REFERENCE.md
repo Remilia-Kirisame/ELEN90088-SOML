@@ -6,7 +6,7 @@
 - Local clone command (each machine):
 
   ```bash
-  git clone https://github.com/NVlabs/DoRA Project-LLM-mini/DoRA
+  git clone https://github.com/NVlabs/DoRA mini-project-DoRA/DoRA
   ```
 
 - The folder `DoRA/` is gitignored and not used at runtime. We use HuggingFace

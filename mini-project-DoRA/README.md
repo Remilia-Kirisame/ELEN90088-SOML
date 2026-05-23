@@ -199,14 +199,26 @@ This reads every `metrics.json` under `results/**/`, builds the 12 mean ± std c
 
 ### Step 5 — Regenerate figures (optional)
 
-The three figures in `figures/` are produced by the paired jupytext notebook at `notebooks/analysis.{py,ipynb}`. After re-running the sweep (so `results/**/metrics.json` reflects your new data), regenerate them with:
+The three figures in `figures/` are produced by the paired jupytext notebook at `notebooks/analysis.{py,ipynb}`. After re-running the sweep (so `results/**/metrics.json` reflects your new data):
 
-```bash
-jupytext --sync notebooks/analysis.ipynb       # refresh .ipynb from .py source-of-truth
-jupyter nbconvert --execute --inplace notebooks/analysis.ipynb
-```
+1. **Sync the `.ipynb` from the `.py` source-of-truth** (jupytext is in the `dev` extras):
 
-Outputs land in `figures/rank_sensitivity.png`, `figures/format_adaptation.png`, `figures/loss_curves.png`. The committed PNGs are already in sync with the committed `metrics.json`, so this step is only needed if you've changed the data.
+   ```bash
+   jupytext --sync notebooks/analysis.ipynb
+   ```
+
+2. **Execute the notebook end-to-end.** Two paths, pick whichever fits your environment:
+
+   - *Interactive (recommended).* Open `notebooks/analysis.ipynb` in VSCode (with the Python + Jupyter extension) or JupyterLab and Run All. The notebook calls `fig.savefig(...)` for each figure, so the PNGs are written out as cells run. No extra install needed beyond the `dev` extras.
+   - *Command-line, if you have `nbconvert` installed separately* (it's intentionally not in `dev` to keep the project install minimal):
+
+     ```bash
+     jupyter nbconvert --execute --inplace notebooks/analysis.ipynb
+     ```
+
+     `nbconvert` ships with full Jupyter installs (`pip install jupyter` or any distro's Jupyter package) — convenient if you want to regen figures non-interactively from a CI or batch context.
+
+Either way, outputs land in `figures/rank_sensitivity.png`, `figures/format_adaptation.png`, `figures/loss_curves.png`. The committed PNGs are already in sync with the committed `metrics.json`, so this step is only needed if you've changed the data.
 
 ## Methodology brief
 

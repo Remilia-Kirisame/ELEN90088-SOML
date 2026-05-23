@@ -44,7 +44,7 @@ def evaluate_boolq(model, tokenizer, dataset, max_length: int = 512) -> dict:
 
         correct += int(pred == formatted["label"])
         total += 1
-        # Absolute NLL here can look high (e.g. 10+) even when accuracy is ~88%: the model puts mass on other continuations (formatting tokens, spaces) before the actual yes/no token. The relative comparison above is what determines correctness — use accuracy as the headline metric.
+        # Absolute NLL here can look high (e.g. 10+) even when accuracy is ~88%: the model puts mass on other continuations (formatting tokens, spaces) before the actual yes/no token. For cs170k-trained adapters the NLL is higher and *rises* with training step — the adapter learns to emit "true/false" rather than "yes/no", so probability mass on the yes/no token falls further as training proceeds. The relative yes-vs-no comparison above still determines correctness — use accuracy as the headline metric.
         nll_sum += -(score_yes if formatted["label"] == 1 else score_no)
 
     return {"accuracy": correct / total, "loss": nll_sum / total}

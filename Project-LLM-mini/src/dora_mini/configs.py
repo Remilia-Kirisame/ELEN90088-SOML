@@ -26,7 +26,7 @@ PHASES = {
     "cs170k": {
         "train_dataset": "commonsense_170k",
         "learning_rate": 2.0e-4,
-        # Placeholder — finalised by the Phase-2 timing probe (spec §6); regenerate after.
+        # Finalised at 2500 by the Phase-2 timing probe (loss flattens by step ~1,200).
         "num_steps": 2500,
         "warmup_steps": 100,
     },

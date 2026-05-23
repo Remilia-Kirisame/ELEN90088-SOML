@@ -68,6 +68,18 @@ This project has two modes:
 - **Mac (or any laptop, no GPU)** — for running tests and the analysis notebook. The 42 pytest tests cover paths, configs, parsing, dataset utilities, and summarization — they don't import torch.
 - **Linux GPU host (Spartan HPC, or your own machine)** — for training, evaluation, and the smoke test. Requires a CUDA Linux GPU (`torch==2.6.0+cu124` is pinned in `pyproject.toml`; the cu124 wheel is Linux-x86_64 only).
 
+### System requirements (for training)
+
+The observed peaks on Spartan H100 (from `results/SUMMARY.md`):
+
+- **GPU VRAM:** ~60 GB peak for DoRA training (any rank, both regimes); ~34 GB peak for LoRA. **Will not fit on consumer GPUs** (24 GB RTX 4090 / A10G); you need H100 80 GB, A100 80 GB, H200, or equivalent. LoRA-only experiments fit comfortably on 40 GB A100 / L40S.
+- **CUDA driver:** 12.4-compatible (matches the pinned `torch==2.6.0+cu124` wheel). Older drivers (12.0–12.3) fail at `import torch` with a cryptic CUDA-version mismatch.
+- **System RAM:** ≥ 32 GB. Headroom is mainly for the HF dataloader; the sbatch template requests 32 GB.
+- **Disk:** ~25 GB for the Mistral-7B-Instruct weights (HF cache), ~150 MB for `commonsense_170k.json`, plus a few GB for adapters + logs. Route these to project storage, not `$HOME` — see [`docs/spartan-ood-setup.md`](docs/spartan-ood-setup.md).
+- **Time:** the full 36-run sweep takes **~22 GPU-hours of training + ~3 GPU-hours of eval = ~25 GPU-hours on H100** (~3× on A100). Per-run: LoRA ~6 min BoolQ / ~27 min cs170k; DoRA ~20 min BoolQ / ~90 min cs170k.
+
+The Mac-side smoke test has no GPU requirement.
+
 ### Quick smoke test (Mac, ~10 seconds)
 
 ```bash
@@ -110,7 +122,7 @@ For **OOD / Code Server / Jupyter** users on a Spartan-style HPC, see [`docs/spa
 
 ## Reproduce the results
 
-The full Tier-2 sweep is 36 training runs (~6 GPU-hours of LoRA + ~25 GPU-hours of DoRA on H100, or ~3× that on A100). Each run produces a `metrics.json` that the summarizer aggregates into `results/SUMMARY.md`.
+The full Tier-2 sweep is 36 training runs — **~22 GPU-hours of training + ~3 GPU-hours of evaluation on H100** (~3× on A100). Per-run breakdown is in the System requirements section above. Each run writes a `metrics.json` that the summarizer aggregates into `results/SUMMARY.md`.
 
 ### Step 1 — Generate the config grid
 
@@ -121,6 +133,16 @@ python scripts/gen_configs.py
 This writes the 36 Tier-2 YAMLs into `configs/tier2-boolq/` and `configs/tier2-cs170k/`. The grid is the single source of truth in `src/dora_mini/configs.py:all_configs()`.
 
 ### Step 2 — Train
+
+**Before training: download `commonsense_170k.json` (Phase 2 only).** The BoolQ split is fetched automatically by `datasets.load_dataset("boolq")`, but cs170k is a JSON file from the LLM-Adapters project that you must place at `data/commonsense_170k.json`:
+
+```bash
+mkdir -p data
+curl -L -o data/commonsense_170k.json \
+  https://raw.githubusercontent.com/AGI-Edgerunners/LLM-Adapters/main/ft-training_set/commonsense_170k.json
+```
+
+(For tight reproducibility, pin to a specific LLM-Adapters commit instead of `main`; the file has been stable but `main` is not version-locked.) The file is ~150 MB. Skip this download if you only want to run BoolQ (Phase 1).
 
 On Spartan / SLURM:
 
@@ -169,6 +191,17 @@ python scripts/summarize_results.py > results/SUMMARY.md
 ```
 
 This reads every `metrics.json` under `results/**/`, builds the 12 mean ± std cells (BoolQ + cs170k × LoRA/DoRA × 3 ranks), and renders the four gap tables (likelihood / broad genmatch per regime, plus the strict-genmatch gap for cs170k). The strict-genmatch values are loaded from `_strict_genmatch_pre_fix.json` (see caveats below).
+
+### Step 5 — Regenerate figures (optional)
+
+The three figures in `figures/` are produced by the paired jupytext notebook at `notebooks/analysis.{py,ipynb}`. After re-running the sweep (so `results/**/metrics.json` reflects your new data), regenerate them with:
+
+```bash
+jupytext --sync notebooks/analysis.ipynb       # refresh .ipynb from .py source-of-truth
+jupyter nbconvert --execute --inplace notebooks/analysis.ipynb
+```
+
+Outputs land in `figures/rank_sensitivity.png`, `figures/format_adaptation.png`, `figures/loss_curves.png`. The committed PNGs are already in sync with the committed `metrics.json`, so this step is only needed if you've changed the data.
 
 ## Methodology brief
 

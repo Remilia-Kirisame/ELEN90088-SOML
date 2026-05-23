@@ -1,0 +1,25 @@
+{
+  "_meta": "Snapshot of cs170k eval_accuracy_genmatch values from the original strict parser (parse_true_false only), preserved before the broad-parser re-run on 2026-05-23. The broad-parser re-run overwrites eval_accuracy_genmatch in each metrics.json; this file is the only record of the strict-parser numbers. See commit 9045e19 for the broadened parser. The strict view is also interesting in its own right: it measures how strongly the adapter overrode the BoolQ eval prompt's 'yes/no' instruction with its cs170k 'true/false' training format — i.e. format-adaptation strength, not task accuracy.",
+  "parser": "parse_true_false",
+  "date": "2026-05-23",
+  "values": {
+    "dora_mistral7b_cs170k_r4_s1": 0.0464,
+    "dora_mistral7b_cs170k_r4_s2": 0.0584,
+    "dora_mistral7b_cs170k_r4_s42": 0.1892,
+    "dora_mistral7b_cs170k_r8_s1": 0.2162,
+    "dora_mistral7b_cs170k_r8_s2": 0.5434,
+    "dora_mistral7b_cs170k_r8_s42": 0.1954,
+    "dora_mistral7b_cs170k_r16_s1": 0.7932,
+    "dora_mistral7b_cs170k_r16_s2": 0.7691,
+    "dora_mistral7b_cs170k_r16_s42": 0.3266,
+    "lora_mistral7b_cs170k_r4_s1": 0.0003,
+    "lora_mistral7b_cs170k_r4_s2": 0.0226,
+    "lora_mistral7b_cs170k_r4_s42": 0.2978,
+    "lora_mistral7b_cs170k_r8_s1": 0.0107,
+    "lora_mistral7b_cs170k_r8_s2": 0.6623,
+    "lora_mistral7b_cs170k_r8_s42": 0.1143,
+    "lora_mistral7b_cs170k_r16_s1": 0.8232,
+    "lora_mistral7b_cs170k_r16_s2": 0.3752,
+    "lora_mistral7b_cs170k_r16_s42": 0.5241
+  }
+}

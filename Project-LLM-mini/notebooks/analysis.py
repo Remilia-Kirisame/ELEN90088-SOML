@@ -25,7 +25,11 @@ from dora_mini import summarize  # noqa: E402
 FIGDIR = Path.cwd().parent / "figures"
 FIGDIR.mkdir(exist_ok=True)
 
-runs = summarize.load_runs(str(Path.cwd().parent / "results" / "**" / "metrics.json"))
+PROJECT_ROOT = Path.cwd().parent
+runs = summarize.load_runs(
+    pattern=str(PROJECT_ROOT / "results" / "**" / "metrics.json"),
+    strict_snapshot_path=str(PROJECT_ROOT / "results" / "tier2-cs170k" / "_strict_genmatch_pre_fix.json"),
+)
 cells = summarize.aggregate(runs)
 print(f"{len(runs)} runs, {len(cells)} cells")
 
@@ -53,6 +57,43 @@ axes[0].legend(fontsize=8)
 axes[1].legend(fontsize=8)
 fig.tight_layout()
 fig.savefig(FIGDIR / "rank_sensitivity.png", dpi=150)
+
+# %% [markdown]
+# ## Format adaptation (cs170k only): strict vs broad parser by rank
+# Strict-parser genmatch only counts literal true/false → measures how strongly
+# the adapter overrode the BoolQ prompt's yes/no instruction with cs170k's
+# training format. Broad parser accepts either vocabulary → task accuracy.
+
+# %%
+if any(k[0] == "cs170k" and "genmatch_strict_mean" in cells[k] for k in cells):
+    fig, ax = plt.subplots(figsize=(6.5, 4))
+    for method in ["lora", "dora"]:
+        for variant, label_suffix, style in [
+            ("genmatch", "broad", "-"),
+            ("genmatch_strict", "strict", "--"),
+        ]:
+            ys, es = [], []
+            for r in RANKS:
+                c = cells.get(("cs170k", method, r))
+                if c and f"{variant}_mean" in c:
+                    ys.append(c[f"{variant}_mean"])
+                    es.append(c[f"{variant}_std"])
+                else:
+                    ys.append(float("nan"))
+                    es.append(0.0)
+            ax.errorbar(
+                RANKS, ys, yerr=es, marker="o", capsize=3, linestyle=style,
+                label=f"{method.upper()} ({label_suffix})",
+            )
+    ax.set_title("cs170k: format-adaptation (strict) vs task accuracy (broad)")
+    ax.set_xlabel("rank r")
+    ax.set_ylabel("BoolQ dev genmatch accuracy")
+    ax.set_xticks(RANKS)
+    ax.set_ylim(-0.05, 1.0)
+    ax.axhline(0.5, color="grey", linewidth=0.5, linestyle=":")
+    ax.legend(fontsize=9)
+    fig.tight_layout()
+    fig.savefig(FIGDIR / "format_adaptation.png", dpi=150)
 
 # %% [markdown]
 # ## Overfitting - train vs eval loss (one representative run per regime)

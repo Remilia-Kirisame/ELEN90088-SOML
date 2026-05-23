@@ -38,23 +38,34 @@ print(f"{len(runs)} runs, {len(cells)} cells")
 
 # %%
 RANKS = [4, 8, 16]
+# Convention used in both rank_sensitivity and format_adaptation: color encodes
+# method (LoRA blue, DoRA orange); linestyle encodes the metric variant.
+METHOD_COLORS = {"lora": "C0", "dora": "C1"}
+METRIC_STYLES = {"likelihood": "-", "genmatch": "--"}
 fig, axes = plt.subplots(1, 2, figsize=(11, 4), sharey=True)
 for ax, trainset in zip(axes, ["boolq", "cs170k"]):
-    for metric in ["likelihood", "genmatch"]:
-        for method in ["lora", "dora"]:
+    for method in ["lora", "dora"]:
+        for metric in ["likelihood", "genmatch"]:
             ys, es = [], []
             for r in RANKS:
                 c = cells.get((trainset, method, r))
                 ys.append(c[f"{metric}_mean"] if c else float("nan"))
                 es.append(c[f"{metric}_std"] if c else 0.0)
-            ax.errorbar(RANKS, ys, yerr=es, marker="o", capsize=3,
-                        label=f"{method.upper()} ({metric})")
+            ax.errorbar(
+                RANKS, ys, yerr=es,
+                marker="o", capsize=3,
+                color=METHOD_COLORS[method],
+                linestyle=METRIC_STYLES[metric],
+                label=f"{method.upper()} ({metric})",
+            )
+    if trainset == "cs170k":
+        ax.axhline(0.82, color="grey", linewidth=0.8, linestyle="-.", label="zero-shot (~0.82)")
     ax.set_title(f"trained on {trainset}")
     ax.set_xlabel("rank r")
     ax.set_xticks(RANKS)
 axes[0].set_ylabel("BoolQ dev accuracy")
-axes[0].legend(fontsize=8)
-axes[1].legend(fontsize=8)
+axes[0].legend(fontsize=8, loc="lower right")
+axes[1].legend(fontsize=8, loc="lower right")
 fig.tight_layout()
 fig.savefig(FIGDIR / "rank_sensitivity.png", dpi=150)
 
@@ -82,16 +93,20 @@ if any(k[0] == "cs170k" and "genmatch_strict_mean" in cells[k] for k in cells):
                     ys.append(float("nan"))
                     es.append(0.0)
             ax.errorbar(
-                RANKS, ys, yerr=es, marker="o", capsize=3, linestyle=style,
+                RANKS, ys, yerr=es,
+                marker="o", capsize=3,
+                color=METHOD_COLORS[method],
+                linestyle=style,
                 label=f"{method.upper()} ({label_suffix})",
             )
+    ax.axhline(0.82, color="grey", linewidth=0.8, linestyle="-.", label="zero-shot broad (~0.82)")
+    ax.axhline(0.5, color="grey", linewidth=0.5, linestyle=":", label="chance (0.5)")
     ax.set_title("cs170k: format-adaptation (strict) vs task accuracy (broad)")
     ax.set_xlabel("rank r")
     ax.set_ylabel("BoolQ dev genmatch accuracy")
     ax.set_xticks(RANKS)
     ax.set_ylim(-0.05, 1.0)
-    ax.axhline(0.5, color="grey", linewidth=0.5, linestyle=":")
-    ax.legend(fontsize=9)
+    ax.legend(fontsize=9, loc="center right")
     fig.tight_layout()
     fig.savefig(FIGDIR / "format_adaptation.png", dpi=150)
 
@@ -111,7 +126,9 @@ for d in runs:
             ax.plot([p["step"] for p in e], [p["eval_loss"] for p in e],
                     "--", label=f"{meta['trainset']} eval")
 ax.set_xlabel("step")
-ax.set_ylabel("loss")
+ax.set_ylabel("loss (log scale)")
+ax.set_yscale("log")
+ax.set_title("Train and eval loss (representative DoRA r=8 seed=42)")
 ax.legend(fontsize=8)
 fig.tight_layout()
 fig.savefig(FIGDIR / "loss_curves.png", dpi=150)

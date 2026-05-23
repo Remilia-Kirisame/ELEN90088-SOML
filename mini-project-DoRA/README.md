@@ -172,14 +172,14 @@ The training pass records *likelihood* accuracy (first-token Yes/No logprob, par
 
 ```bash
 for d in results/tier2-boolq/*/ results/tier2-cs170k/*/; do
-    python scripts/evaluate.py --adapter "$d/adapter"
+    python scripts/evaluate.py --run "$d"
 done
 ```
 
 For the zero-shot baseline (base Mistral-Instruct, no adapter):
 
 ```bash
-python scripts/evaluate.py --zero-shot --out results/tier2-baseline/zeroshot_mistral7b_boolq/metrics.json
+python scripts/evaluate.py --zero-shot --model mistralai/Mistral-7B-Instruct-v0.3
 ```
 
 Use `python scripts/evaluate.py --debug-print 10` to inspect raw model outputs without writing metrics — useful for the parser-vs-real-collapse diagnostic that surfaced our two-views finding.

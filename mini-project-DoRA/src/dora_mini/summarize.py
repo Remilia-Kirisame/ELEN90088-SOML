@@ -223,7 +223,7 @@ def render(cells: dict[tuple, dict], zero_shot: dict | None) -> str:
     lines += [
         "## How to regenerate", "",
         "```bash",
-        "cd mini-project-DoRA && python scripts/summarize_results.py > results/SUMMARY.md",
+        "cd mini-project-DoRA && python scripts/summarize_results.py --tier 2 > results/SUMMARY-tier2.md",
         "```", "",
     ]
     return "\n".join(lines)

@@ -10,12 +10,12 @@ Framed as a **regime-contrast generalization study** rather than a strict replic
 
 ## TL;DR — headline findings
 
-(Full numbers in [results/SUMMARY.md](results/SUMMARY.md). 36 training runs + 1 zero-shot baseline. Mean ± std over 3 seeds: `{42, 1, 2}`.)
+(Full numbers in [results/SUMMARY-tier2.md](results/SUMMARY-tier2.md). 36 training runs + 1 zero-shot baseline. Mean ± std over 3 seeds: `{42, 1, 2}`. A separate Tier-3 enrichment — 24 cs170k runs at 10k steps × 4 seeds `{114, 514, 1919, 810}` — is reported in [results/SUMMARY-tier3.md](results/SUMMARY-tier3.md); see also the [results index](results/SUMMARY.md).)
 
 1. **DoRA does not meaningfully outperform LoRA on task accuracy** in this setup. The DoRA−LoRA gap is within seed std at every rank in BoolQ and at $r \in \{4, 8\}$ in cs170k. The only direction-consistent gap is at cs170k $r{=}16$ where DoRA *loses* −0.032 to LoRA (still below formal significance at $n{=}3$).
 2. **DoRA shows a small directional edge on format-adaptation strength** — the *strict-parser* cs170k genmatch — of +0.056 at $r \in \{8, 16\}$. Seed std is large (0.16–0.35), so within noise at $n{=}3$, but the direction matches the paper's central hypothesis.
 3. **DoRA cost overhead is firmly reconfirmed:** ~3.3× wall-time, ~1.8× peak GPU memory at every rank, both regimes.
-4. **Methodological discovery:** the strict-parser cs170k genmatch implicitly conflated *task accuracy* and *format-adaptation strength*. Broadening the parser (`parse_yes_no_or_true_false`) disentangled the two. Both views are reported. See `results/SUMMARY.md` and `figures/format_adaptation.png` for the contrast.
+4. **Methodological discovery:** the strict-parser cs170k genmatch implicitly conflated *task accuracy* and *format-adaptation strength*. Broadening the parser (`parse_yes_no_or_true_false`) disentangled the two. Both views are reported. See `results/SUMMARY-tier2.md` and `figures/format_adaptation.png` for the contrast.
 
 Figures: `figures/rank_sensitivity.png`, `figures/format_adaptation.png`, `figures/loss_curves.png`.
 
@@ -33,27 +33,32 @@ mini-project-DoRA/
 │   ├── models.py           # load_tokenizer, load_base_model, wrap_peft (use_dora switch)
 │   ├── train.py            # run_training(config_path) — full training pipeline
 │   ├── eval.py             # evaluate_boolq (likelihood) + evaluate_boolq_generate (genmatch)
-│   └── summarize.py        # seed aggregation → SUMMARY.md tables
+│   ├── summarize.py        # Tier-2 seed aggregation → SUMMARY-tier2.md tables
+│   └── summarize_tier3.py  # Tier-3 aggregation + cross-tier comparison → SUMMARY-tier3.md
 ├── scripts/                                     # CLI entrypoints
 │   ├── smoke_test.py       # env + model + PEFT sanity check (no checkpoint saved)
 │   ├── gen_configs.py      # writes the 36 Tier-2 YAMLs into configs/tier2-*/
 │   ├── train.py            # python scripts/train.py --config <yaml>
 │   ├── evaluate.py         # generation-eval over a saved adapter (or --zero-shot for baseline)
-│   ├── summarize_results.py# aggregates results/**/metrics.json → results/SUMMARY.md
+│   ├── summarize_results.py# `--tier {2,3}` flag; aggregates results/**/metrics.json → results/SUMMARY-tier{2,3}.md
 │   ├── sbatch_quick.sh     # short-queue SLURM template (gpu-a100-short, 30 min)
 │   ├── sbatch_train.sh     # long-queue SLURM template (gpu-h100, 4 hr)
 │   └── local/setup_env.example.sh  # committed env-var template (real setup_env.sh is gitignored)
 ├── configs/                                     # one YAML per experiment
 │   ├── tier1/                                   # 6 historical Tier-1 configs (single-seed rank sweep)
 │   ├── tier2-boolq/                             # 18 Tier-2 Phase-1 configs (BoolQ, 3 seeds)
-│   └── tier2-cs170k/                            # 18 Tier-2 Phase-2 configs (cs170k, 3 seeds)
+│   ├── tier2-cs170k/                            # 18 Tier-2 Phase-2 configs (cs170k, 3 seeds)
+│   └── tier3-cs170k/                            # 24 Tier-3 cs170k configs (10k steps, 4 seeds)
 ├── results/                                     # text artifacts only (adapters/checkpoints are gitignored)
-│   ├── SUMMARY.md                               # the deliverable: 12 cells + zero-shot + 4 gap tables + prose
+│   ├── SUMMARY.md                               # index pointing to per-tier summaries
+│   ├── SUMMARY-tier2.md                         # canonical Tier-2 deliverable: 12 cells + zero-shot + 4 gap tables + prose
+│   ├── SUMMARY-tier3.md                         # Tier-3 enrichment: 6 cs170k cells at 10k steps + cross-tier deltas
 │   ├── tier1/                                   # historical Tier-1 metrics.json + configs
 │   ├── tier2-boolq/                             # Tier-2 Phase-1 metrics.json + train.log per run
 │   ├── tier2-cs170k/                            # Tier-2 Phase-2 metrics.json + train.log per run
 │   │   └── _strict_genmatch_pre_fix.json        # snapshot of pre-parser-fix strict genmatch
-│   └── tier2-baseline/                          # zero-shot baseline metrics.json
+│   ├── tier2-baseline/                          # zero-shot baseline metrics.json
+│   └── tier3-cs170k/                            # Tier-3 10k-step cs170k metrics.json + train.log per run (24 runs, _t3 suffix)
 ├── figures/                                     # three audience-ready figures
 ├── notebooks/                                   # jupytext-paired analysis (.py is source of truth)
 └── tests/                                       # pytest — 42 tests, all passing on Mac (no GPU stack)
@@ -70,7 +75,7 @@ This project has two modes:
 
 ### System requirements (for training)
 
-The observed peaks on Spartan H100 (from `results/SUMMARY.md`):
+The observed peaks on Spartan H100 (from `results/SUMMARY-tier2.md`):
 
 - **GPU VRAM:** ~60 GB peak for DoRA training (any rank, both regimes); ~34 GB peak for LoRA. **Will not fit on consumer GPUs** (24 GB RTX 4090 / A10G); you need H100 80 GB, A100 80 GB, H200, or equivalent. LoRA-only experiments fit comfortably on 40 GB A100 / L40S.
 - **CUDA driver:** 12.4-compatible (matches the pinned `torch==2.6.0+cu124` wheel). Older drivers (12.0–12.3) fail at `import torch` with a cryptic CUDA-version mismatch.
@@ -122,7 +127,7 @@ For **OOD / Code Server / Jupyter** users on a Spartan-style HPC, see [`docs/spa
 
 ## Reproduce the results
 
-The full Tier-2 sweep is 36 training runs — **~22 GPU-hours of training + ~3 GPU-hours of evaluation on H100** (~3× on A100). Per-run breakdown is in the System requirements section above. Each run writes a `metrics.json` that the summarizer aggregates into `results/SUMMARY.md`.
+The full Tier-2 sweep is 36 training runs — **~22 GPU-hours of training + ~3 GPU-hours of evaluation on H100** (~3× on A100). Per-run breakdown is in the System requirements section above. Each run writes a `metrics.json` that the summarizer aggregates into `results/SUMMARY-tier2.md`.
 
 ### Step 1 — Generate the config grid
 
@@ -189,13 +194,21 @@ python scripts/evaluate.py --run results/tier2-cs170k/<run_id> --debug-print 10
 python scripts/evaluate.py --zero-shot --model mistralai/Mistral-7B-Instruct-v0.3 --debug-print 10
 ```
 
-### Step 4 — Aggregate into SUMMARY.md
+### Step 4 — Aggregate into SUMMARY-tier2.md
 
 ```bash
-python scripts/summarize_results.py > results/SUMMARY.md
+python scripts/summarize_results.py --tier 2 > results/SUMMARY-tier2.md
 ```
 
-This reads every `metrics.json` under `results/**/`, builds the 12 mean ± std cells (BoolQ + cs170k × LoRA/DoRA × 3 ranks), and renders the four gap tables (likelihood / broad genmatch per regime, plus the strict-genmatch gap for cs170k). The strict-genmatch values are loaded from `_strict_genmatch_pre_fix.json` (see caveats below).
+This reads every Tier-2 `metrics.json` under `results/**/`, builds the 12 mean ± std cells (BoolQ + cs170k × LoRA/DoRA × 3 ranks), and renders the four gap tables (likelihood / broad genmatch per regime, plus the strict-genmatch gap for cs170k). The strict-genmatch values are loaded from `_strict_genmatch_pre_fix.json` (see caveats below).
+
+For the Tier-3 enrichment (10k-step cs170k, 4 seeds, 24 runs), pass `--tier 3` instead:
+
+```bash
+python scripts/summarize_results.py --tier 3 > results/SUMMARY-tier3.md
+```
+
+The Tier-3 renderer also loads Tier-2 cs170k cells for cross-tier comparison tables.
 
 ### Step 5 — Regenerate figures (optional)
 
@@ -234,7 +247,7 @@ Either way, outputs land in `figures/rank_sensitivity.png`, `figures/format_adap
 - **Eval set:** Full BoolQ dev (3,270 examples) for both regimes, so the metric is comparable across them.
 - **Compute:** UniMelb Spartan HPC. gpu-h100 partition (4 h cap per job). Tens of GPU-hours total across training + gen-eval + the parser-fix re-run.
 
-The interpretation prose in `results/SUMMARY.md` splits findings into three views — *task accuracy*, *format adaptation*, and *cost* — and discusses the inverse-rank trend (low-rank cs170k training beats zero-shot on BoolQ; high-rank underperforms it).
+The interpretation prose in `results/SUMMARY-tier2.md` splits findings into three views — *task accuracy*, *format adaptation*, and *cost* — and discusses the inverse-rank trend (low-rank cs170k training beats zero-shot on BoolQ; high-rank underperforms it). The Tier-3 summary (`results/SUMMARY-tier3.md`) amplifies the inverse-rank trend at 4× training and adds a method × rank interaction not visible at the Tier-2 budget.
 
 ## Caveats and known limitations
 

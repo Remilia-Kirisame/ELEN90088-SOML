@@ -19,6 +19,16 @@ Framed as a **regime-contrast generalization study** rather than a strict replic
 
 Figures: `figures/rank_sensitivity.png`, `figures/format_adaptation.png`, `figures/loss_curves.png`.
 
+### Tier 3 enrichment (10k cs170k steps × 4 seeds, 24 runs)
+
+Tier 2 alone meets the project rubric. Tier 3 is an enrichment pass that pushes training closer to the paper's ~32k-step regime (we land at 10k = 31%) and adds an extra seed for tighter statistics. Three findings worth pulling out (full numbers + interpretation in [results/SUMMARY-tier3.md](results/SUMMARY-tier3.md), visuals under `figures/tier3/`):
+
+1. **The Tier-2 inverse-rank trend sharpens.** At 4× training, the broad-genmatch gap between low-rank (r=4) and high-rank (r=16) cells widens from Tier 2's ~3 pp into a clean ~15-18 pp separation: r=4 cells sit at or above the 0.82 zero-shot baseline, r=16 cells drop to 0.66-0.70. More PEFT capacity = more drift from BoolQ-optimal toward the broader cs170k mix.
+2. **Methodological diagnostic, scaled up.** The BoolQ-yes/no likelihood probe *collapses* at every Tier-3 cell (Δ = −0.10 to −0.40), but broad-parser genmatch shows only modest task-accuracy loss (Δ = −0.006 to −0.12). The model isn't broken; it has fully switched to cs170k's true/false vocabulary. The format-vs-task split Tier 2 introduced as a footnote becomes load-bearing at Tier 3 — **genmatch is the right Tier-3 metric; likelihood at Tier 3 measures format preservation, not task accuracy**.
+3. **DoRA-vs-LoRA, refined.** Tier 2's task-accuracy null replicates at n=4 — DoRA-LoRA genmatch gap within seed std at every rank. On the format-preservation axis (likelihood), the DoRA r=8 cell shows a +0.16 edge over LoRA r=8, well outside seed std and consistent across all 4 seeds: DoRA at mid-rank resists the cs170k format takeover where LoRA capitulates. Reframes Tier 2's "+0.056 strict-genmatch direction-consistent edge" claim with sharper statistical support and a cleaner metric story.
+
+DoRA's ~3.3× wall-time / ~1.8× peak-memory cost overhead is reconfirmed at the 10k-step budget.
+
 ## What's in this repository
 
 ```

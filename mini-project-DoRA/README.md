@@ -23,7 +23,7 @@ Figures: `figures/rank_sensitivity.png`, `figures/format_adaptation.png`, `figur
 
 Tier 2 alone meets the project rubric. Tier 3 is an enrichment pass that pushes training closer to the paper's ~32k-step regime (we land at 10k = 31%) and adds an extra seed for tighter statistics. Three findings worth pulling out (full numbers + interpretation in [results/SUMMARY-tier3.md](results/SUMMARY-tier3.md), visuals under `figures/tier3/`):
 
-1. **The Tier-2 inverse-rank trend sharpens.** At 4× training, the broad-genmatch gap between low-rank (r=4) and high-rank (r=16) cells widens from Tier 2's ~3 pp into a clean ~15-18 pp separation: r=4 cells sit at or above the 0.82 zero-shot baseline, r=16 cells drop to 0.66-0.70. More PEFT capacity = more drift from BoolQ-optimal toward the broader cs170k mix.
+1. **The Tier-2 inverse-rank trend sharpens.** At 4× training, the r=4-vs-r=16 broad-genmatch gap widens from Tier 2's ~3 pp into **~14 pp within LoRA** and **~16 pp within DoRA** (roughly a 5× amplification of Tier 2's signal). r=4 cells sit at or above the 0.82 zero-shot baseline; r=16 cells drop into 0.66–0.71. More PEFT capacity = more drift from BoolQ-optimal toward the broader cs170k mix.
 2. **Methodological diagnostic, scaled up.** The BoolQ-yes/no likelihood probe *collapses* at every Tier-3 cell (Δ = −0.10 to −0.40), but broad-parser genmatch shows only modest task-accuracy loss (Δ = −0.006 to −0.12). The model isn't broken; it has fully switched to cs170k's true/false vocabulary. The format-vs-task split Tier 2 introduced as a footnote becomes load-bearing at Tier 3 — **genmatch is the right Tier-3 metric; likelihood at Tier 3 measures format preservation, not task accuracy**.
 3. **DoRA-vs-LoRA, refined.** Tier 2's task-accuracy null replicates at n=4 — DoRA-LoRA genmatch gap within seed std at every rank. On the format-preservation axis (likelihood), the DoRA r=8 cell shows a +0.16 edge over LoRA r=8, well outside seed std and consistent across all 4 seeds: DoRA at mid-rank resists the cs170k format takeover where LoRA capitulates. Reframes Tier 2's "+0.056 strict-genmatch direction-consistent edge" claim with sharper statistical support and a cleaner metric story.
 
@@ -92,7 +92,7 @@ The observed peaks on Spartan H100 (from `results/SUMMARY-tier2.md`):
 - **System RAM:** ≥ 32 GB. Headroom is mainly for the HF dataloader; the sbatch template requests 32 GB.
 - **Disk:** ~15 GB for the Mistral-7B-Instruct weights (HF cache, bfloat16), ~150 MB for `commonsense_170k.json`, plus a few GB for adapters + logs. Route these to project storage, not `$HOME` — see [`docs/spartan-ood-setup.md`](docs/spartan-ood-setup.md).
 - **Time (Tier 2):** the full 36-run sweep takes **~22 GPU-hours of training + ~3 GPU-hours of eval = ~25 GPU-hours on H100** (~3× on A100). Per-run: LoRA ~6 min BoolQ / ~27 min cs170k; DoRA ~20 min BoolQ / ~90 min cs170k.
-- **Time (Tier 3):** the 24-run cs170k enrichment at 10k steps takes **~70 GPU-hours of training + ~30 GPU-hours of gen-eval = ~100 GPU-hours on H100**. Per-run: LoRA cs170k 10k ≈ 98 min; DoRA cs170k 10k ≈ 318 min. Observed wall-clock for our submission: 11h42m training + 2h40m gen-eval ≈ 14h22m total, with 8-10 jobs running in parallel on `gpu-h100`.
+- **Time (Tier 3):** the 24-run cs170k enrichment at 10k steps takes **~84 GPU-hours of training + ~30 GPU-hours of gen-eval ≈ ~114 GPU-hours on H100** (12 LoRA × ~98 min + 12 DoRA × ~318 min for training; gen-eval ~75 min × 24). Per-run: LoRA cs170k 10k ≈ 98 min; DoRA cs170k 10k ≈ 318 min. Observed wall-clock for our submission: 11h42m training + 2h40m gen-eval ≈ 14h22m total, with 8-10 jobs running in parallel on `gpu-h100`.
 
 The Mac-side smoke test has no GPU requirement.
 
@@ -256,7 +256,9 @@ Outputs: `figures/tier3/rank_sensitivity.png`, `figures/tier3/format_drift.png`,
 
 ## Reproduce the Tier-3 enrichment
 
-The Tier-3 enrichment is 24 cs170k runs at 10k steps with seeds `{114, 514, 1919, 810}` — **~70 GPU-hours of training + ~30 GPU-hours of gen-eval on H100**. Same code path as Tier 2; the `--tier 3` flag and the `_t3` run-id suffix route everything to `configs/tier3-cs170k/` and `results/tier3-cs170k/` without touching Tier-2 artifacts. Tier 3 is *sequential* to Tier 2 (run after Tier 2 was complete), not integrated with it — see `results/SUMMARY-tier3.md` for the framing.
+The Tier-3 enrichment is 24 cs170k runs at 10k steps with seeds `{114, 514, 1919, 810}` — **~84 GPU-hours of training + ~30 GPU-hours of gen-eval ≈ ~114 GPU-hours on H100**. Same code path as Tier 2; the `--tier 3` flag and the `_t3` run-id suffix route everything to `configs/tier3-cs170k/` and `results/tier3-cs170k/` without touching Tier-2 artifacts. Tier 3 is *sequential* to Tier 2 (run after Tier 2 was complete), not integrated with it — see `results/SUMMARY-tier3.md` for the framing.
+
+**Prerequisite — `commonsense_170k.json` must already be on disk at `data/commonsense_170k.json`.** Use the download command from the Tier-2 reproduce path (Step 2 above) if you haven't run Tier-2 training yet. Tier 3 reads from the same gitignored `data/` location.
 
 ### Step T3.1 — Generate the Tier-3 config grid
 
@@ -288,7 +290,7 @@ Each run writes the same artifacts as Tier 2 (`metrics.json`, `train.log`, `adap
 
 ### Step T3.3 — Generation evaluation
 
-Same pattern as Tier-2's Step 3, but over the `tier3-cs170k/` directories. The `--partition=gpu-h100 --time=02:00:00` CLI overrides matter (sbatch_quick.sh defaults to `gpu-a100-short` which caps at ~2 GPUs/user — queue-contention bottleneck — and 30 min, which a ~60-80 min gen-eval would TIMEOUT):
+Same pattern as Tier-2's Step 3, but over the `tier3-cs170k/` directories. **Requires the adapter weights from Step T3.2** — adapter directories under `results/tier3-cs170k/<run_id>_t3/adapter/` are gitignored (only `config.yaml`, `metrics.json`, `train.log` are committed), so a cold reproducer must run T3.2 before T3.3. The `--partition=gpu-h100 --time=02:00:00` CLI overrides matter (sbatch_quick.sh defaults to `gpu-a100-short` which caps at ~2 GPUs/user — queue-contention bottleneck — and 30 min, which a ~60-80 min gen-eval would TIMEOUT):
 
 ```bash
 for d in results/tier3-cs170k/*/; do
@@ -307,7 +309,19 @@ Already shown in Step 4 above:
 python scripts/summarize_results.py --tier 3 > results/SUMMARY-tier3.md
 ```
 
-The Tier-3 renderer also loads Tier-2 cs170k cells for the cross-tier (T3 − T2) comparison tables.
+The Tier-3 renderer also loads Tier-2 cs170k cells for the cross-tier (T3 − T2) comparison tables. **If your local `results/tier2-cs170k/` is empty** (e.g., a Tier-3-only reproducer who hasn't run Tier 2), the script still succeeds but the cross-tier delta tables will render empty rows. The Tier-3-only cells render correctly regardless.
+
+### Step T3.5 — Regenerate the Tier-3 figures (optional)
+
+See the "For Tier-3 figures" paragraph in Step 5 above — same workflow as Tier 2's notebook, but uses `notebooks/analysis_tier3.{py,ipynb}` and writes to `figures/tier3/`. Quick summary:
+
+```bash
+jupytext --sync notebooks/analysis_tier3.ipynb
+# then Run All in VSCode/Jupyter, or:
+jupyter nbconvert --execute --inplace notebooks/analysis_tier3.ipynb
+```
+
+Outputs: `figures/tier3/rank_sensitivity.png`, `figures/tier3/format_drift.png`, `figures/tier3/loss_curves.png`.
 
 ## Methodology brief
 
@@ -321,7 +335,7 @@ The Tier-3 renderer also loads Tier-2 cs170k cells for the cross-tier (T3 − T2
   - *Likelihood* — first-token Yes/No logprob ratio. Parser-independent internal probe.
   - *Generation exact-match (`genmatch`)* — greedy decode + parser + exact match. Paper-style. Sensitive to format collapse.
 - **Eval set:** Full BoolQ dev (3,270 examples) for both regimes, so the metric is comparable across them.
-- **Compute:** UniMelb Spartan HPC, `gpu-h100` partition. Per-job `--time` in `sbatch_train.sh` is **8 h** (covers Tier-2 DoRA runs at ~90 min and Tier-3 DoRA runs at ~5.3 h with buffer). The partition itself allows up to 7 days; the 4 h cap we initially used was a self-imposed default in our sbatch template, not a partition limit. Tens of GPU-hours total across Tier 2 training + gen-eval + the parser-fix re-run; another ~100 GPU-hours for the Tier 3 enrichment.
+- **Compute:** UniMelb Spartan HPC, `gpu-h100` partition. Per-job `--time` in `sbatch_train.sh` is **8 h** (covers Tier-2 DoRA runs at ~90 min and Tier-3 DoRA runs at ~5.3 h with buffer). The partition itself allows up to 7 days; the 4 h cap we initially used was a self-imposed default in our sbatch template, not a partition limit. Tens of GPU-hours total across Tier 2 training + gen-eval + the parser-fix re-run; another ~114 GPU-hours for the Tier 3 enrichment.
 
 The interpretation prose in `results/SUMMARY-tier2.md` splits findings into three views — *task accuracy*, *format adaptation*, and *cost* — and discusses the inverse-rank trend (low-rank cs170k training beats zero-shot on BoolQ; high-rank underperforms it). The Tier-3 summary (`results/SUMMARY-tier3.md`) amplifies the inverse-rank trend at 4× training and adds a method × rank interaction not visible at the Tier-2 budget.
 

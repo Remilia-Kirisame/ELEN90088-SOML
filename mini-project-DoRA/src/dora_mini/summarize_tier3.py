@@ -192,7 +192,7 @@ def _interpretation(cells: dict[tuple, dict]) -> list[str]:
     return [
         "## Notes on interpretation",
         "",
-        "### Headline — the Tier-2 inverse-rank trend sharpens into a 15 - 18 pp signal",
+        "### Headline — the Tier-2 inverse-rank trend sharpens into a ~14 - 16 pp within-method signal",
         "",
         "Tier 2 reported a tentative \"inverse-rank trend on broad genmatch\": low-rank cs170k training *beat* the "
         "zero-shot Mistral-Instruct baseline (~0.82) by a few points at r=4, while high-rank training *underperformed* "
@@ -202,7 +202,8 @@ def _interpretation(cells: dict[tuple, dict]) -> list[str]:
         f"(0.82): r=4 trained models sit at-or-above zero-shot (lora_r4 = {gen('lora', 4)}, dora_r4 = {gen('dora', 4)}); "
         f"r=8 trained models sit at-or-just-below it (lora_r8 = {gen('lora', 8)}, dora_r8 = {gen('dora', 8)}); r=16 "
         f"trained models drop *clearly* below it (lora_r16 = {gen('lora', 16)}, dora_r16 = {gen('dora', 16)}). The "
-        "low-vs-high-rank separation on genmatch is now **~15 - 18 pp**, a 5x amplification of Tier 2's signal. The "
+        "r=4-vs-r=16 separation on genmatch is now **~14 pp within LoRA** and **~16 pp within DoRA** (versus Tier 2's "
+        "~3 pp at either method) — roughly a **5x amplification** of Tier 2's signal. The "
         "narrative this supports: more PEFT capacity = more drift from BoolQ-optimal toward the broader cs170k task "
         "mix; the more rank the adapter has, the more aggressively it commits to the multi-task distribution and the "
         "more BoolQ-specific behavior it sacrifices. This is the most novel positive contribution from Tier 3.",
@@ -287,8 +288,8 @@ def _interpretation(cells: dict[tuple, dict]) -> list[str]:
         "figures, and prose are all unchanged by Tier 3 — verify by cross-comparison against the per-tier results "
         "directories (`results/tier2-cs170k/` vs `results/tier3-cs170k/`), which have disjoint run-id namespaces "
         "(Tier-3 ids carry a `_t3` suffix). Tier 3's contribution is to test two Tier-2 hypotheses against 4x "
-        "training and one extra seed: it sharpens the inverse-rank trend from ~3 pp to ~15 - 18 pp on broad "
-        "genmatch, and converts the strict-genmatch DoRA edge from within-noise to direction-consistent-and-"
+        "training and one extra seed: it sharpens the inverse-rank trend from ~3 pp to ~14 - 16 pp within-method "
+        "on broad genmatch, and converts the strict-genmatch DoRA edge from within-noise to direction-consistent-and-"
         "larger-than-seed-std on the likelihood axis.",
         "",
     ]

@@ -1,8 +1,15 @@
-"""Tier-2 sweep definition — the single source of truth for all experiment configs.
+"""Tier-2 + Tier-3 sweep definitions — the single source of truth for all experiment configs.
 
-`all_configs()` builds the 36-run sweep as plain dicts (pure, stdlib-only).
-`write_configs()` serialises them to standalone YAML files. Each emitted file is
-self-contained: `python scripts/train.py --config configs/<name>.yaml`.
+Tier 2: `all_configs()` builds the 36-run sweep (2 methods × 3 ranks × 3 seeds × 2 regimes)
+as plain dicts (pure, stdlib-only); `write_configs()` serialises them to YAML under
+`configs/tier2-{boolq,cs170k}/`.
+
+Tier 3: `all_tier3_configs()` builds the 24-run cs170k-only enrichment (2 methods × 3 ranks
+× 4 seeds, 10k steps); `write_tier3_configs()` serialises to `configs/tier3-cs170k/`. Tier-3
+run ids carry a `_t3` suffix so `run_group()` routes them separately and Tier-2 namespaces
+remain untouched.
+
+Each emitted YAML is self-contained: `python scripts/train.py --config configs/<name>.yaml`.
 """
 from __future__ import annotations
 

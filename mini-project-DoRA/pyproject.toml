@@ -16,7 +16,7 @@ dependencies = [
     "accelerate>=1.0",
     # Datasets + tokenizer support.
     "datasets>=3.0",
-    "bitsandbytes>=0.43.1",                      # required for 4-bit (Tier 4 QDoRA work)
+    "bitsandbytes>=0.43.1",                      # currently unused at runtime — Tier 4 (QDoRA) was descoped; kept for any future quantization work. Remove (and re-lock) if you want to slim the venv.
     "sentencepiece",                              # Mistral tokenizer is sentencepiece-based
     "protobuf",                                   # required transitively by sentencepiece
     # Analysis + plotting.

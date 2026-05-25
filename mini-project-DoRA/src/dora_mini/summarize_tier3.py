@@ -225,6 +225,31 @@ def _interpretation(cells: dict[tuple, dict]) -> list[str]:
         "of format preservation, not task accuracy.** All cross-tier comparisons in this document use genmatch as the "
         "primary axis for that reason.",
         "",
+        "### Notes on figures — how Tier 3's `format_drift.png` relates to Tier 2's `format_adaptation.png`",
+        "",
+        "Both figures probe the same underlying phenomenon — how strongly the cs170k-trained adapter has overridden "
+        "BoolQ's yes/no prompt with cs170k's true/false training format — but via different metrics and at different "
+        "training scales, and reading them as duplicates would miss the time-evolution story.",
+        "",
+        "**Tier 2's `figures/format_adaptation.png` (at 2500 steps)** plots two genmatch numbers from the *same "
+        "gen-eval pass*: broad parser (accepts yes/no OR true/false) sits flat near ~0.82 across ranks; strict parser "
+        "(accepts only true/false) climbs from ~0.1 at r=4 to ~0.5 - 0.6 at r=16. The widening solid-vs-dashed gap "
+        "is the format-adaptation signal — at 2500 steps the model is only *partially* shifting to true/false, and "
+        "we needed a strict-only parser run to see it. (Those strict numbers are preserved in "
+        "`results/tier2-cs170k/_strict_genmatch_pre_fix.json` since they were later overwritten by the broad-parser "
+        "re-run.)",
+        "",
+        "**Tier 3's `figures/tier3/format_drift.png` (at 10k steps)** plots the gap between two *different metrics* "
+        "on the same cell: `genmatch - likelihood`. At 10k steps the model has *fully* shifted to true/false, so the "
+        "yes/no likelihood probe collapses while broad genmatch holds — the gap visualizes that collapse directly "
+        "without needing a separate strict-parser run. This figure is computable from data already in each cell's "
+        "`metrics.json` and would have been ~0 across all cells at the Tier-2 step count (likelihood hadn't collapsed "
+        "yet), so it only becomes informative at the longer training budget.",
+        "",
+        "Both figures support the same conclusion — *format adaptation strengthens with rank and with training* — via "
+        "complementary probes: Tier-2's caught the early-onset signal that the main metrics couldn't see; Tier-3's "
+        "catches the consequence of full adaptation that the main metrics now mis-read.",
+        "",
         "### DoRA vs LoRA at 10k steps — task-accuracy null replicates; a format-preservation edge appears at r=8",
         "",
         f"On the task-accuracy metric (broad genmatch) the Tier-2 finding holds: at every rank the DoRA - LoRA gap is "
@@ -253,14 +278,18 @@ def _interpretation(cells: dict[tuple, dict]) -> list[str]:
         "run; DoRA ~60 GB vs LoRA ~34 GB peak GPU memory). This is the most robust quantitative DoRA-vs-LoRA result "
         "in the project: stable across tiers, ranks, regimes, and now training budgets.",
         "",
-        "### Scope — relation to Tier 2",
+        "### Scope — sequential to Tier 2, not integrated with it",
         "",
-        "Per the 2026-05-23 Tier-2 scope decision (see [SUMMARY-tier2.md](SUMMARY-tier2.md) and AGENTS.md), Tier 2 "
-        "already meets the project rubric's Example 4 (\"Impressive\") tier on its own. Tier 3 is enrichment, not a "
-        "grade-floor concern: it adds n=4 statistical power on the Tier-2 open questions, sharpens the inverse-rank "
-        "trend from a noisy ~3 pp signal into a clean ~15 - 18 pp result, and converts the strict-genmatch DoRA edge "
-        "from within-noise to direction-consistent-and-larger-than-seed-std on the likelihood axis. Tier 2's tables, "
-        "figures, and prose are unchanged by Tier 3 and remain the canonical project deliverable.",
+        "Tier 3 was run *after* Tier 2 was complete and the 2026-05-23 scope decision was made (see "
+        "[SUMMARY-tier2.md](SUMMARY-tier2.md) and AGENTS.md). Tier 2 already meets the project rubric's Example 4 "
+        "(\"Impressive\") tier on its own; this document is a *separate sequential deliverable hanging off "
+        "SUMMARY-tier2.md, not a revision or augmentation of it*. Tier-2 cell counts, seed sets, recipe, tables, "
+        "figures, and prose are all unchanged by Tier 3 — verify by cross-comparison against the per-tier results "
+        "directories (`results/tier2-cs170k/` vs `results/tier3-cs170k/`), which have disjoint run-id namespaces "
+        "(Tier-3 ids carry a `_t3` suffix). Tier 3's contribution is to test two Tier-2 hypotheses against 4x "
+        "training and one extra seed: it sharpens the inverse-rank trend from ~3 pp to ~15 - 18 pp on broad "
+        "genmatch, and converts the strict-genmatch DoRA edge from within-noise to direction-consistent-and-"
+        "larger-than-seed-std on the likelihood axis.",
         "",
     ]
 
@@ -270,10 +299,14 @@ def render(t3_cells: dict[tuple, dict], t2_cells: dict[tuple, dict] | None = Non
     lines = [
         "# Tier 3 results summary",
         "",
-        "Enrichment of the Tier-2 cs170k phase: same grid shape (2 methods x 3 ranks x 1 regime) "
-        "stretched to 10k training steps (4x Tier 2's 2500) with one additional seed (n=4: {114, 514, 1919, 810}). "
-        "Total: 24 training runs + 24 gen-eval runs. Code commit `fe6ed5e` on branch `llm/t3`. See "
-        "[SUMMARY-tier2.md](SUMMARY-tier2.md) for the canonical project deliverable.",
+        "**Sequential follow-up dig-in on Tier-2's cs170k open questions.** Tier 2 (see "
+        "[SUMMARY-tier2.md](SUMMARY-tier2.md)) is the canonical study — complete and unchanged. After Tier 2 "
+        "met the project rubric, we ran an additional 24 cs170k cells *post hoc* to test whether two of "
+        "Tier-2's open hypotheses sharpen at 4x the training budget: (i) the tentative inverse-rank trend on "
+        "broad genmatch (~3 pp at Tier 2, needed more steps to confirm), and (ii) the +0.056 strict-genmatch "
+        "DoRA edge that sat within seed std at n=3. New training recipe: 10k steps (vs Tier 2's 2500), warmup "
+        "400 (proportional), seeds `{114, 514, 1919, 810}` (n=4, *all new seeds — disjoint from Tier 2's "
+        "`{42, 1, 2}`*). 24 training runs + 24 gen-eval runs. Code commit `fe6ed5e` on branch `llm/t3`.",
         "",
     ]
 

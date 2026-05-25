@@ -104,7 +104,7 @@ Once those check out, you can:
 
 - `python scripts/smoke_test.py` — env + model + PEFT sanity check (~2 min on H100)
 - `sbatch scripts/sbatch_train.sh configs/<config>.yaml` — submit a training job
-- `python scripts/evaluate.py --adapter results/<tier>/<run_id>/adapter` — generation-eval pass on a saved adapter
+- `python scripts/evaluate.py --run results/<tier>/<run_id>` — generation-eval pass on a saved adapter (the script reads `config.yaml` from the run dir and locates `adapter/` itself)
 
 ## Env-var reference table
 

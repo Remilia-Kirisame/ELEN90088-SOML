@@ -1,0 +1,7 @@
+# Reserved directory for Tier-3 figures.
+#
+# Tier-3 figure generators (a planned analysis_tier3 notebook) MUST write here
+# (e.g. figures/tier3/rank_sensitivity.png) rather than to figures/ directly.
+# This convention keeps the three canonical Tier-2 deliverable PNGs at their
+# committed paths under figures/ — they are referenced by results/SUMMARY-tier2.md
+# and the public README, and overwriting them would change the Tier-2 record.

@@ -52,6 +52,16 @@ def main() -> int:
         model = models.load_base_model(model_name, "bfloat16")
         parser, gold_map = _PARSERS["boolq"]   # untuned instruct model answers yes/no
         run_dir = Path("results/tier2-baseline/zeroshot_mistral7b_boolq")
+        # The zero-shot baseline lives at a fixed path under tier2-baseline/. It is
+        # the Tier-2 deliverable's reference line — re-running here overwrites it
+        # in place. Surface that to the user before the (expensive) eval pass starts.
+        if (run_dir / "metrics.json").exists() and not args.debug_print:
+            print(
+                f"WARNING: zero-shot metrics.json already exists at {run_dir / 'metrics.json'}; "
+                "this run will overwrite the Tier-2 baseline. Re-run with --debug-print N to inspect "
+                "without writing, or move the existing file out of the way to preserve it.",
+                file=sys.stderr,
+            )
         run_dir.mkdir(parents=True, exist_ok=True)
         metrics: dict = {"run_id": run_dir.name, "model": model_name,
                          "eval_size": args.eval_size}

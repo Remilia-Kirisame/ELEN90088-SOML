@@ -12,6 +12,15 @@
 # %% [markdown]
 # # Tier 2 DoRA Regime Study — analysis
 # Rank-sensitivity (per regime, per metric), overfitting curves, and cost.
+#
+# **Scope: Tier-2 only.** This notebook generates the three canonical Tier-2 figures
+# under `figures/` (`rank_sensitivity.png`, `format_adaptation.png`, `loss_curves.png`).
+# Tier-3 figures live under `figures/tier3/` and are produced by a separate
+# notebook (`analysis_tier3.py`); this file's glob is intentionally narrowed to
+# `results/tier2-*/` so that a stray re-run of *this* notebook can never pollute
+# the Tier-2 deliverable PNGs with Tier-3 data. Even though `summarize._RUN_ID`
+# already rejects Tier-3's `_t3`-suffixed ids by regex, making the scope explicit
+# at the glob level removes the implicit safety dependency.
 
 # %%
 import sys
@@ -26,10 +35,13 @@ FIGDIR = Path.cwd().parent / "figures"
 FIGDIR.mkdir(exist_ok=True)
 
 PROJECT_ROOT = Path.cwd().parent
-runs = summarize.load_runs(
-    pattern=str(PROJECT_ROOT / "results" / "**" / "metrics.json"),
-    strict_snapshot_path=str(PROJECT_ROOT / "results" / "tier2-cs170k" / "_strict_genmatch_pre_fix.json"),
-)
+# Tier-2 only — Tier-3 is loaded by a sibling notebook. See module-level docstring above.
+runs = []
+for sub in ("tier1", "tier2-boolq", "tier2-cs170k", "tier2-baseline"):
+    runs += summarize.load_runs(
+        pattern=str(PROJECT_ROOT / "results" / sub / "**" / "metrics.json"),
+        strict_snapshot_path=str(PROJECT_ROOT / "results" / "tier2-cs170k" / "_strict_genmatch_pre_fix.json"),
+    )
 cells = summarize.aggregate(runs)
 print(f"{len(runs)} runs, {len(cells)} cells")
 

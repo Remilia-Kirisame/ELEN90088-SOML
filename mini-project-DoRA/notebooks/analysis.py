@@ -118,7 +118,9 @@ if any(k[0] == "cs170k" and "genmatch_strict_mean" in cells[k] for k in cells):
     ax.set_ylabel("BoolQ dev genmatch accuracy")
     ax.set_xticks(RANKS)
     ax.set_ylim(-0.05, 1.0)
-    ax.legend(fontsize=9, loc="center right")
+    # Bottom-right corner sits below all six data lines at r=16 (strict tops at
+    # ~0.63; chance ref at 0.5) so the legend doesn't collide with the lines.
+    ax.legend(fontsize=9, loc="lower right")
     fig.tight_layout()
     fig.savefig(FIGDIR / "format_adaptation.png", dpi=150)
 

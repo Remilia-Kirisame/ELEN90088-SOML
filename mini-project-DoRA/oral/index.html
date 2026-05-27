@@ -478,15 +478,24 @@
         <li>T3's likelihood collapse looks catastrophic on the first metric and benign on the second; the format-vs-task split learned at T2 made T3 readable.</li>
       </ul>
 
-      <h3>Cost reconfirmed across tiers</h3>
-      <table class="cost compact">
-        <thead><tr><th></th><th class="num">LoRA</th><th class="num">DoRA</th><th class="num">Ratio</th></tr></thead>
-        <tbody>
-          <tr><td>Wall-time per cs170k run (T3)</td><td class="num">~98 min</td><td class="num">~318 min</td><td class="num">3.3×</td></tr>
-          <tr><td>Peak GPU memory</td><td class="num">~33 GB</td><td class="num">~60 GB</td><td class="num">1.8×</td></tr>
-          <tr><td>Trainable params (r=8)</td><td class="num">20.97 M</td><td class="num">22.35 M</td><td class="num">+6.6%</td></tr>
-        </tbody>
-      </table>
+      <div class="cost-qr-row">
+        <div class="cost-section">
+          <h3>Cost reconfirmed across tiers</h3>
+          <table class="cost compact">
+            <thead><tr><th></th><th class="num">LoRA</th><th class="num">DoRA</th><th class="num">Ratio</th></tr></thead>
+            <tbody>
+              <tr><td>Wall-time per cs170k run (T3)</td><td class="num">~98 min</td><td class="num">~318 min</td><td class="num">3.3×</td></tr>
+              <tr><td>Peak GPU memory</td><td class="num">~33 GB</td><td class="num">~60 GB</td><td class="num">1.8×</td></tr>
+              <tr><td>Trainable params (r=8)</td><td class="num">20.97 M</td><td class="num">22.35 M</td><td class="num">+6.6%</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="qr-section">
+          <h3>Project repository</h3>
+          <img src="figures/repo_qr.svg" alt="QR code linking to the ELEN90088-SOML repo on GitHub" class="qr-code">
+          <p class="qr-url"><code>github.com<wbr>/Remilia-Kirisame<wbr>/ELEN90088-SOML</code></p>
+        </div>
+      </div>
 
       <h3>Caveats</h3>
       <p>n=4 still below conventional n=5+. 10k steps still 31% of paper's ~32k. Mistral-Instruct vs paper's LLaMA-base.</p>

@@ -1082,3 +1082,57 @@ ul.findings > li { padding-left: 0; margin-bottom: 12px; }
   margin: 12px 0 24px;
   max-width: none;
 }
+
+/* Slide 6 (verbose) — cost table + QR row layout.
+   Cost table takes the remaining horizontal space on the left; QR section
+   is a fixed-width column on the right with a heading, the QR image, and
+   the URL as a fallback for anyone who can read but not scan. */
+.cost-qr-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 32px;
+  align-items: start;
+  margin-bottom: 24px;
+}
+
+.cost-qr-row .cost-section h3 {
+  margin-top: 0;
+}
+
+.qr-section {
+  width: 200px;
+  text-align: center;
+}
+
+.qr-section h3 {
+  margin-top: 0;
+  margin-bottom: 12px;
+}
+
+.qr-section .qr-code {
+  width: 160px;
+  height: 160px;
+  display: block;
+  margin: 0 auto;
+  background: white;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.qr-section .qr-url {
+  font-size: 10.5px;
+  color: var(--text-muted);
+  margin: 10px 0 0;
+  font-family: var(--font-mono);
+  line-height: 1.4;
+  max-width: none;
+  overflow-wrap: anywhere;
+}
+
+.qr-section .qr-url code {
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: var(--text-muted);
+}

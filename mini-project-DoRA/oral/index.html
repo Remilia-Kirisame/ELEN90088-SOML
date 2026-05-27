@@ -413,7 +413,7 @@
       <ol class="findings">
         <li><strong>The inverse-rank trend sharpens within-method on genmatch.</strong></li>
         <li><strong>Methodological diagnostic scaled up — likelihood collapsed, genmatch held.</strong></li>
-        <li><strong>DoRA vs LoRA — refined, not contradicted.</strong><em>DoRA at r=8 preserves the yes/no answer format better than LoRA at r=8, but does not produce more correct answers.</em></li>
+        <li><strong>DoRA vs LoRA — refined, not contradicted.</strong><em>DoRA at r=8 retains more residual yes/no log-probability than LoRA at r=8, but emits the same set of correct/incorrect answers — opposite direction to T2's strict-parser hint, which was within noise.</em></li>
       </ol>
 
       <figure class="slide-figure">
@@ -449,7 +449,7 @@
         </div>
         <div class="takeaway-tile">
           <p class="tile-label">2 · Real edge</p>
-          <p class="tile-body">is in <strong>format preservation</strong>, not accuracy.</p>
+          <p class="tile-body">is on the <strong>format axis</strong>, not accuracy.</p>
         </div>
         <div class="takeaway-tile">
           <p class="tile-label">3 · Trend</p>
@@ -467,7 +467,7 @@
 
       <ol class="takeaways">
         <li><strong>"DoRA wins at low rank" does not replicate as a task-accuracy improvement</strong> in our Mistral-7B-Instruct + cs170k setup — neither at T2's 2,500-step budget nor at T3's 10k. Null supported by 7 seeds total (T2 n=3 + T3 n=4) across two training budgets.</li>
-        <li><strong>DoRA's measurable edge over LoRA is in format preservation, not task accuracy.</strong> +0.056 T2 strict-genmatch cell-mean (a hint — per-seed-split) → +0.16 T3 r=8 likelihood edge (outside seed std at n=4, with 3 of 4 seeds favouring DoRA). Direction matches the paper's hypothesis on format adaptation; evidence sharpens with statistical power and training budget but remains qualified.</li>
+        <li><strong>DoRA's measurable edge over LoRA is on format-related signals, not task accuracy.</strong> Two independent observations point in <em>opposite</em> directions on the format axis: T2 strict-parser hint (+0.056 cell-mean at r=8 and r=16, per-seed split — DoRA emits slightly <em>more</em> cs170k true/false) and T3 r=8 likelihood edge (+0.16, 3 of 4 seeds — DoRA retains <em>more</em> BoolQ yes/no). T3 is the cleaner statistical claim; T2 is within noise. The paper's hypothesis (DoRA adapts to training format more readily) is partially supported by T2 only; we don't claim a unified mechanism across tiers.</li>
         <li><strong>Inverse-rank trend on broad genmatch sharpens dramatically at scale</strong> — T2's within-method drop (LoRA 3.3 pp, DoRA 6.6) grows to T3's (LoRA 14 pp, DoRA 16). More PEFT capacity + longer training = more drift from BoolQ-optimal toward the broader cs170k mix.</li>
       </ol>
 

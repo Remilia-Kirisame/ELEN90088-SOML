@@ -38,9 +38,15 @@ OUT_T2.mkdir(parents=True, exist_ok=True)
 OUT_T3.mkdir(parents=True, exist_ok=True)
 
 # Shared style — keeps cross-tier figures visually consistent.
+# Convention: color encodes method (LoRA blue, DoRA orange). Line style encodes
+# task-accuracy-vs-diagnostic: SOLID = broad-parser genmatch (the canonical task
+# accuracy metric across the project); DASHED = likelihood OR strict-parser
+# genmatch (parser-format diagnostics that diverge from task accuracy when the
+# model's output format shifts).
 RANKS = [4, 8, 16]
 METHOD_COLORS = {"lora": "C0", "dora": "C1"}
-METRIC_STYLES = {"likelihood": "-", "genmatch": "--"}
+METRIC_STYLES = {"likelihood": "--", "genmatch": "-"}
+METRIC_LABELS = {"likelihood": "likelihood", "genmatch": "broad genmatch"}
 ZEROSHOT_GEN = 0.82
 
 # Bigger fonts so they're readable when projected without zooming.
@@ -95,12 +101,12 @@ def fig_t2_rank_sensitivity(cells) -> None:
                     marker="o", capsize=3,
                     color=METHOD_COLORS[method],
                     linestyle=METRIC_STYLES[metric],
-                    label=f"{method.upper()} ({metric})",
+                    label=f"{method.upper()} ({METRIC_LABELS[metric]})",
                 )
         if trainset == "cs170k":
             ax.axhline(
                 ZEROSHOT_GEN, color="grey", linewidth=0.8,
-                linestyle="-.", label=f"zero-shot (~{ZEROSHOT_GEN:.2f})",
+                linestyle="-.", label=f"zero-shot broad-genmatch (~{ZEROSHOT_GEN:.2f})",
             )
         ax.set_title(f"trained on {trainset}")
         ax.set_xlabel("rank r")
@@ -120,8 +126,8 @@ def fig_t2_format_adaptation(cells) -> None:
     fig, ax = plt.subplots(figsize=(6.5, 4))
     for method in ["lora", "dora"]:
         for variant, label_suffix, style in [
-            ("genmatch", "broad", "-"),
-            ("genmatch_strict", "strict", "--"),
+            ("genmatch", "broad genmatch", "-"),
+            ("genmatch_strict", "strict genmatch", "--"),
         ]:
             ys, es = [], []
             for r in RANKS:
@@ -141,7 +147,7 @@ def fig_t2_format_adaptation(cells) -> None:
             )
     ax.axhline(
         ZEROSHOT_GEN, color="grey", linewidth=0.8,
-        linestyle="-.", label=f"zero-shot broad (~{ZEROSHOT_GEN:.2f})",
+        linestyle="-.", label=f"zero-shot broad-genmatch (~{ZEROSHOT_GEN:.2f})",
     )
     ax.axhline(0.5, color="grey", linewidth=0.5, linestyle=":", label="chance (0.5)")
     ax.set_title("cs170k: format-adaptation (strict) vs task accuracy (broad)")
@@ -174,11 +180,11 @@ def fig_t3_rank_sensitivity(cells) -> None:
                 marker="o", capsize=3,
                 color=METHOD_COLORS[method],
                 linestyle=METRIC_STYLES[metric],
-                label=f"{method.upper()} ({metric})",
+                label=f"{method.upper()} ({METRIC_LABELS[metric]})",
             )
     ax.axhline(
         ZEROSHOT_GEN, color="grey", linewidth=0.8,
-        linestyle="-.", label=f"zero-shot ({ZEROSHOT_GEN:.2f})",
+        linestyle="-.", label=f"zero-shot broad-genmatch ({ZEROSHOT_GEN:.2f})",
     )
     ax.axhline(0.5, color="grey", linewidth=0.5, linestyle=":", label="chance (0.5)")
     ax.set_title("Tier 3 cs170k (10k steps, n=4): rank sensitivity")

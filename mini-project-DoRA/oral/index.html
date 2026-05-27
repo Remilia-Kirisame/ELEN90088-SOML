@@ -225,9 +225,9 @@
       <div class="mode-verb">
         <h1 class="slide-heading">Tier 2 — and the parser-fix discovery</h1>
 
-        <p><strong>Phase 1 (BoolQ) — null on task accuracy.</strong> 18 runs (LoRA/DoRA × r ∈ {4, 8, 16} × 3 seeds). Every DoRA−LoRA gap within seed std on both metrics. The per-task instruct-model regime is exactly where no DoRA edge is expected — this sets up Phase 2 as the designed contrast.</p>
+        <p><strong>Phase 1 (BoolQ) — null on task accuracy gap.</strong> Every DoRA−LoRA gap within seed std on both metrics.</p>
 
-        <p><strong>Phase 2 (cs170k) — first reading looked dramatic.</strong> Genmatch at r=4 was <strong>0.0003</strong> for one LoRA run — worse than chance on a binary task. DoRA showed an apparent +0.056 edge at r=8 and r=16. Looked like the paper's collapse pattern reproducing.</p>
+        <p><strong>Phase 2 (cs170k) — first reading looked dramatic.</strong> Genmatch at r=4 was <strong>0.0003</strong> for one LoRA run — worse than chance on a binary task. </p>
 
         <p><strong>Diagnosis</strong> (eyeball generations via <code>--debug-print N</code>):</p>
 
@@ -330,9 +330,9 @@
         </table>
 
         <ul class="findings">
-          <li><strong>DoRA − LoRA gap within seed std at r ∈ {4, 8}.</strong> At r=16 DoRA loses −0.032 — <em>direction-consistent across all 3 seeds</em> (every seed pair shows DoRA &lt; LoRA), gap exceeds seed std; n=3 below formal significance.</li>
-          <li><strong>Strict-parser DoRA cell-mean edge:</strong> +0.056 at r=8 and r=16. Seed std wide (0.16–0.35); per-seed direction is split (DoRA wins 2 of 3 seeds at r=8, only 1 of 3 at r=16). <em>A hint matching the paper's hypothesis on format adaptation — not significant evidence.</em></li>
-          <li><strong>Inverse-rank trend (hint).</strong> Broad genmatch decreases with rank. r=4 beats zero-shot (~0.82) by ~3 pp; at r=16 LoRA returns to zero-shot, DoRA falls ~4 pp below. Within-method drop: LoRA 3.3 pp, DoRA 6.6 pp. More PEFT capacity = more drift from BoolQ-optimal toward the broader cs170k distribution. Signal in the 3-7 pp range — within "could-be-noise" at n=3.</li>
+          <li><strong>DoRA − LoRA gap within seed std at r ∈ {4, 8}.</strong></li>
+          <li><strong>Strict-parser DoRA cell-mean edge:</strong></li>
+          <li><strong>Inverse-rank trend (hint).</strong> Broad genmatch decreases with rank.</li>
           <li><strong>Cost reconfirmed:</strong> DoRA ~3.3× wall-time, ~1.8× peak GPU memory at every rank, both regimes.</li>
         </ul>
 
@@ -411,9 +411,9 @@
 
       <h3>Three findings, in priority order</h3>
       <ol class="findings">
-        <li><strong>The inverse-rank trend sharpens within-method on genmatch.</strong> T2's within-method drop (LoRA 3.3 pp, DoRA 6.6) grows to T3's (LoRA 14 pp, DoRA 16) — ~2-4× amplification per method. r=4 cells sit at-or-above zero-shot 0.82; r=16 cells drop into 0.66–0.71. <em>The project's clearest scientific finding.</em></li>
-        <li><strong>Methodological diagnostic scaled up — likelihood collapsed, genmatch held.</strong> Likelihood drops −0.10 to −0.40 vs T2; broad genmatch loss only −0.006 to −0.12. The model isn't broken — it has fully switched to cs170k's true/false vocabulary, so the yes/no likelihood probe misreads correct answers as wrong. <strong>Genmatch is the T3 task-accuracy metric; likelihood at T3 is a format-preservation probe.</strong></li>
-        <li><strong>DoRA vs LoRA — refined, not contradicted.</strong> Task-accuracy null replicates on genmatch (gap within seed std at every rank). On likelihood, DoRA r=8 shows a <strong>+0.16 edge over LoRA r=8</strong>, well outside DoRA's r=8 seed std (~0.05); <strong>3 of 4 paired seeds favour DoRA</strong> by 0.18–0.25, LoRA wins the fourth (s114) by 0.02. Read with the matching genmatch gap (+0.008, basically zero): <em>DoRA at r=8 preserves the yes/no answer format better than LoRA at r=8, but does not produce more correct answers.</em></li>
+        <li><strong>The inverse-rank trend sharpens within-method on genmatch.</strong></li>
+        <li><strong>Methodological diagnostic scaled up — likelihood collapsed, genmatch held.</strong></li>
+        <li><strong>DoRA vs LoRA — refined, not contradicted.</strong><em>DoRA at r=8 preserves the yes/no answer format better than LoRA at r=8, but does not produce more correct answers.</em></li>
       </ol>
 
       <figure class="slide-figure">

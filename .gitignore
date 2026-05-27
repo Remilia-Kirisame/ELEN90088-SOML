@@ -25,6 +25,7 @@ AGENTS.md
 
 # Superpowers planning artifacts (specs, plans) — kept local-only
 docs/superpowers/
+.superpowers/
 
 # Work in Process folder
 WIP/

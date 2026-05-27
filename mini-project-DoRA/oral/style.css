@@ -33,6 +33,180 @@
             0 4px 12px rgba(28, 25, 23, 0.04);
 }
 
+/* Presentation-mode palette overrides — applied when body has .presentation-mode.
+   Bright academic, warm cream/sienna theme. Used during the live 5-minute talk. */
+body.presentation-mode {
+  --bg: #fdf8f0;
+  --bg-elev: #ffffff;
+  --bg-muted: #f5e4d0;
+  --text: #2a1f15;
+  --text-muted: #6b5640;
+  --text-faint: #c9a878;
+  --border: #e6d5b8;
+  --border-strong: #c9a878;
+  --accent: #8b3a1f;
+  --accent-soft: #f5e4d0;
+}
+
+/* Serif typography in presentation mode for titles + hero numbers.
+   The existing sans body face stays for paragraphs and tables. */
+body.presentation-mode h1.title,
+body.presentation-mode h1.slide-heading {
+  font-family: var(--font-serif);
+}
+
+/* Mode visibility — only one mode's content is shown at a time. */
+body.presentation-mode .mode-verb { display: none; }
+body.verbose-mode .mode-pres { display: none; }
+/* When neither mode class is set (initial paint before JS runs),
+   both blocks would show. JS applies the class on DOMContentLoaded
+   so this state lasts only a few ms; no FOUC visible in practice. */
+
+/* View Transitions API — crossfade timing for the mode toggle.
+   Chrome 111+, Safari 18+, Edge support this; Firefox falls back to
+   an instant swap (the toggle still works, just without the animation). */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 250ms;
+  animation-timing-function: ease-in-out;
+}
+
+/* Mode toggle widget — pill switch in sidenav footer. */
+.sidenav-toggle {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: center;
+}
+
+.mode-toggle {
+  display: inline-flex;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  padding: 2px;
+  background: var(--bg-muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.mode-toggle-seg {
+  appearance: none;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px 12px;
+  border-radius: 999px;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: 1;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.mode-toggle-seg:hover:not(.active) {
+  color: var(--text);
+}
+
+.mode-toggle-seg.active {
+  background: var(--accent);
+  color: white;
+}
+
+.mode-toggle-seg:focus { outline: none; }
+
+.mode-toggle-seg:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Slide 2 (presentation) — three method tiles. */
+.method-tiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px;
+  margin: 24px 0;
+}
+
+.method-tile {
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+}
+
+.method-tile .tile-label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0 0 8px;
+}
+
+.method-tile .tile-body {
+  font-size: 15px;
+  color: var(--text);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.method-tile .tile-aside {
+  color: var(--text-faint);
+  font-size: 0.85em;
+}
+
+.method-footer {
+  font-size: 14px;
+  color: var(--text-muted);
+  text-align: center;
+  font-style: italic;
+  margin: 16px 0 0;
+  max-width: none;
+}
+
+/* Compact figure variant — used on presentation-mode slides where the figure
+   is supporting context rather than the visual hero. */
+.slide-figure.fig-compact img {
+  max-height: 220px;
+}
+
+/* Hero figure variant — used on presentation-mode slides where the figure
+   IS the visual anchor (e.g., slide 4). */
+.slide-figure.fig-hero img {
+  max-height: 320px;
+}
+
+/* Slim findings list — one-line bullets for presentation mode. */
+ul.findings-slim {
+  list-style: none;
+  padding: 0;
+  margin: 20px 0;
+}
+
+ul.findings-slim li {
+  font-size: 15px;
+  color: var(--text);
+  line-height: 1.5;
+  margin-bottom: 8px;
+  padding-left: 18px;
+  position: relative;
+}
+
+ul.findings-slim li::before {
+  content: "·";
+  position: absolute;
+  left: 6px;
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 18px;
+  line-height: 1.2;
+}
+
+ul.findings-slim strong { color: var(--accent); }
+
 * { box-sizing: border-box; }
 
 html, body {
@@ -765,7 +939,31 @@ ul.findings > li { padding-left: 0; margin-bottom: 12px; }
    -------------------------------------------------------------------------- */
 
 @media print {
-  body { height: auto; overflow: visible; }
+  /* Force presentation mode for the PDF backup, regardless of the active
+     toggle state. Palette variables and visibility rules redefined here
+     win over any body-class state. */
+  body {
+    height: auto;
+    overflow: visible;
+    --bg: #fdf8f0;
+    --bg-elev: #ffffff;
+    --bg-muted: #f5e4d0;
+    --text: #2a1f15;
+    --text-muted: #6b5640;
+    --text-faint: #c9a878;
+    --border: #e6d5b8;
+    --border-strong: #c9a878;
+    --accent: #8b3a1f;
+    --accent-soft: #f5e4d0;
+  }
+  body h1.title,
+  body h1.slide-heading {
+    font-family: var(--font-serif);
+  }
+  /* Hide verbose blocks, force-show presentation blocks. */
+  body .mode-verb { display: none !important; }
+  body .mode-pres { display: block !important; }
+
   .sidenav { display: none; }
   .slides { margin-left: 0; height: auto; overflow: visible; }
   .slide {
@@ -794,4 +992,93 @@ ul.findings > li { padding-left: 0; margin-bottom: 12px; }
   .slide { padding: 40px 32px 56px; }
   h1.title { font-size: 40px; }
   .two-col { grid-template-columns: 1fr; }
+}
+
+/* Hero stat — used on slide 5 in presentation mode. */
+.hero-num {
+  font-family: var(--font-serif);
+  font-size: 88px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--accent);
+  text-align: center;
+  margin: 18px 0 6px;
+  letter-spacing: -0.03em;
+}
+
+.hero-cap {
+  font-size: 15px;
+  color: var(--text-muted);
+  text-align: center;
+  font-style: italic;
+  margin: 0 auto 14px;
+  max-width: 70ch;
+}
+
+.hero-sentence {
+  font-size: 17px;
+  color: var(--text);
+  text-align: center;
+  margin: 0 auto 18px;
+  max-width: 60ch;
+  line-height: 1.45;
+}
+
+/* Chip row — secondary findings as pill-shaped chips. */
+.chip-row {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+
+.chip {
+  background: var(--accent-soft);
+  color: var(--accent);
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* Slide 6 (presentation) — three takeaway tiles. */
+.takeaway-tiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px;
+  margin: 24px 0;
+}
+
+.takeaway-tile {
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+}
+
+.takeaway-tile .tile-label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0 0 8px;
+}
+
+.takeaway-tile .tile-body {
+  font-size: 15px;
+  color: var(--text);
+  line-height: 1.45;
+  margin: 0;
+}
+
+.cost-line {
+  font-size: 14px;
+  color: var(--text-muted);
+  text-align: center;
+  font-style: italic;
+  margin: 12px 0 24px;
+  max-width: none;
 }

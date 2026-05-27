@@ -21,8 +21,14 @@
     <li><a href="#s5" data-target="5"><span class="num">5</span><span class="lbl">Tier 3 sharper signals</span></a></li>
     <li><a href="#s6" data-target="6"><span class="num">6</span><span class="lbl">Wrap-up</span></a></li>
   </ol>
+  <div class="sidenav-toggle">
+    <div class="mode-toggle" role="group" aria-label="Display mode">
+      <button type="button" class="mode-toggle-seg active" data-mode="presentation">Present</button>
+      <button type="button" class="mode-toggle-seg" data-mode="verbose">Verbose</button>
+    </div>
+  </div>
   <div class="sidenav-footer">
-    <span><kbd>↑</kbd> <kbd>↓</kbd> · <kbd>1</kbd>–<kbd>6</kbd></span>
+    <span><kbd>↑</kbd> <kbd>↓</kbd> · <kbd>1</kbd>–<kbd>6</kbd> · <kbd>m</kbd></span>
   </div>
 </nav>
 
@@ -33,34 +39,69 @@
   <!-- ============================================================== -->
   <section id="s1" class="slide slide-title">
     <div class="slide-content">
-      <p class="eyebrow">ELEN90088 SOML 2026 · Project 2 (Hands-on LLMs) · Mini-project</p>
-      <h1 class="title">Reproducing DoRA</h1>
-      <p class="subtitle">A Regime-Contrast Generalization Study, with a Post-Hoc Enrichment</p>
-      <p class="presenter">Remilia · 28/29 May 2026 · Kwong Lee Dow Building 263</p>
 
-      <div class="question-box">
-        <p class="question-label">The question</p>
-        <p class="question-text">Does DoRA outperform LoRA <em>more at low rank</em>, as the paper claims?</p>
+      <div class="mode-pres">
+        <p class="eyebrow">ELEN90088 SOML 2026 · Project 2 (Hands-on LLMs) · Mini-project</p>
+        <h1 class="title">Reproducing DoRA</h1>
+        <p class="subtitle">A regime-contrast study, with a post-hoc enrichment</p>
+
+        <div class="question-box">
+          <p class="question-label">The question</p>
+          <p class="question-text">Does DoRA outperform LoRA <em>more at low rank</em>, as the paper claims?</p>
+        </div>
+
+        <div class="tier-timeline">
+          <div class="tier">
+            <span class="tier-label">Tier 1</span>
+            <span class="tier-desc">Pilot · 6 runs</span>
+          </div>
+          <span class="arrow" aria-hidden="true">→</span>
+          <div class="tier tier-main">
+            <span class="tier-label">Tier 2</span>
+            <span class="tier-desc">Main · 36 + 1 runs</span>
+          </div>
+          <span class="arrow" aria-hidden="true">→</span>
+          <div class="tier">
+            <span class="tier-label">Tier 3</span>
+            <span class="tier-desc">Enrich · 24 runs</span>
+          </div>
+        </div>
+
+        <p class="frame-note"><em>Generalization study · Mistral-7B-Instruct (open-access)</em></p>
+        <p class="presenter">Remilia · 28/29 May 2026 · Kwong Lee Dow Building 263</p>
       </div>
 
-      <div class="tier-timeline">
-        <div class="tier">
-          <span class="tier-label">Tier 1</span>
-          <span class="tier-desc">Pilot · 1 seed · 6 runs</span>
+      <div class="mode-verb">
+        <p class="eyebrow">ELEN90088 SOML 2026 · Project 2 (Hands-on LLMs) · Mini-project</p>
+        <h1 class="title">Reproducing DoRA</h1>
+        <p class="subtitle">A Regime-Contrast Generalization Study, with a Post-Hoc Enrichment</p>
+        <p class="presenter">Remilia · 28/29 May 2026 · Kwong Lee Dow Building 263</p>
+
+        <div class="question-box">
+          <p class="question-label">The question</p>
+          <p class="question-text">Does DoRA outperform LoRA <em>more at low rank</em>, as the paper claims?</p>
         </div>
-        <span class="arrow" aria-hidden="true">→</span>
-        <div class="tier tier-main">
-          <span class="tier-label">Tier 2</span>
-          <span class="tier-desc">Main study · 3 seeds × 2 regimes · 36 + 1 zero-shot</span>
+
+        <div class="tier-timeline">
+          <div class="tier">
+            <span class="tier-label">Tier 1</span>
+            <span class="tier-desc">Pilot · 1 seed · 6 runs</span>
+          </div>
+          <span class="arrow" aria-hidden="true">→</span>
+          <div class="tier tier-main">
+            <span class="tier-label">Tier 2</span>
+            <span class="tier-desc">Main study · 3 seeds × 2 regimes · 36 + 1 zero-shot</span>
+          </div>
+          <span class="arrow" aria-hidden="true">→</span>
+          <div class="tier">
+            <span class="tier-label">Tier 3</span>
+            <span class="tier-desc">Enrichment · 4 seeds × 10k steps · 24 runs</span>
+          </div>
         </div>
-        <span class="arrow" aria-hidden="true">→</span>
-        <div class="tier">
-          <span class="tier-label">Tier 3</span>
-          <span class="tier-desc">Enrichment · 4 seeds × 10k steps · 24 runs</span>
-        </div>
+
+        <p class="frame-note"><strong>Frame:</strong> generalization study, not strict reproduction. Paper used LLaMA-base; we use Mistral-7B-Instruct — the open-access model from Parts 1–5. The contrast: does the paper's claim survive a different base model on a course-feasible regime budget?</p>
       </div>
 
-      <p class="frame-note"><strong>Frame:</strong> generalization study, not strict reproduction. Paper used LLaMA-base; we use Mistral-7B-Instruct — the open-access model from Parts 1–5. The contrast: does the paper's claim survive a different base model on a course-feasible regime budget?</p>
     </div>
   </section>
 
@@ -69,39 +110,65 @@
   <!-- ============================================================== -->
   <section id="s2" class="slide">
     <div class="slide-content">
-      <h1 class="slide-heading">Method</h1>
-      <p class="lede">Two training regimes, two evaluation metrics, three ranks × n seeds — both regimes evaluated on the same BoolQ dev set so the metrics line up.</p>
 
-      <div class="two-col">
-        <div class="col">
-          <h3>Two training regimes</h3>
-          <ul>
-            <li><strong>Phase 1 — BoolQ.</strong> Per-task fine-tune on the full 9,427-example train split. <em>Tier 2 only.</em></li>
-            <li><strong>Phase 2 — <code>commonsense_170k</code>.</strong> Paper's multi-task mix (BoolQ + 7 other commonsense tasks). T2: step-capped at 2,500. T3: stretched to <strong>10k steps</strong> (~31% of paper's ~32k), warmup proportionally scaled to 400.</li>
-          </ul>
+      <div class="mode-pres">
+        <h1 class="slide-heading">Method</h1>
+        <p class="lede">Two regimes × two metrics × three ranks.</p>
+
+        <div class="method-tiles">
+          <div class="method-tile">
+            <p class="tile-label">Regimes</p>
+            <p class="tile-body">BoolQ <span class="tile-aside">(T2)</span><br>commonsense-170k <span class="tile-aside">(T2+T3)</span></p>
+          </div>
+          <div class="method-tile">
+            <p class="tile-label">Metrics</p>
+            <p class="tile-body">Yes/No likelihood<br>Generation exact-match</p>
+          </div>
+          <div class="method-tile">
+            <p class="tile-label">Scale</p>
+            <p class="tile-body">36 + 24 runs<br>7 seeds total<br>r ∈ {4, 8, 16}</p>
+          </div>
         </div>
-        <div class="col">
-          <h3>Two evaluation metrics</h3>
-          <ul>
-            <li><strong>Likelihood</strong> — first-token Yes/No logprob ratio. Parser-independent <em>internal probe</em>.</li>
-            <li><strong>Generation exact-match (<code>genmatch</code>)</strong> — greedy decode + parser + exact-match. <em>Paper-style</em>; sensitive to format collapse.</li>
-          </ul>
-          <p class="footnote">Both metrics evaluated on the full BoolQ dev set (3,270 examples) for every run.</p>
-        </div>
+
+        <p class="method-footer">All eval on BoolQ dev (3,270). Spartan H100 · ~140 GPU-h.</p>
       </div>
 
-      <h3>Sweep totals</h3>
-      <table class="compact">
-        <thead><tr><th>Tier</th><th>Configuration</th><th class="num">Runs</th><th>Seeds</th></tr></thead>
-        <tbody>
-          <tr><td>1</td><td>Pilot LoRA-vs-DoRA rank sweep, BoolQ only</td><td class="num">6</td><td><code>{42}</code> (n=1)</td></tr>
-          <tr><td>2</td><td>2 methods × 3 ranks × 3 seeds × 2 regimes + zero-shot</td><td class="num">37</td><td><code>{42, 1, 2}</code></td></tr>
-          <tr><td>3</td><td>2 methods × 3 ranks × 4 seeds × cs170k @ 10k</td><td class="num">24</td><td><code>{114, 514, 1919, 810}</code> — disjoint from T2</td></tr>
-        </tbody>
-      </table>
+      <div class="mode-verb">
+        <h1 class="slide-heading">Method</h1>
+        <p class="lede">Two training regimes, two evaluation metrics, three ranks × n seeds — both regimes evaluated on the same BoolQ dev set so the metrics line up.</p>
 
-      <h3>Compute</h3>
-      <p>UniMelb Spartan HPC, <code>gpu-h100</code> partition. Tier 2 ≈ 25 GPU-h. Tier 3 ≈ 114 GPU-h (~84 training + ~30 gen-eval), wall-time ≈ 14 h with 8–10 jobs in parallel. All training/eval reproducible via <code>uv.lock</code>-pinned deps + per-run config YAMLs committed alongside <code>metrics.json</code>.</p>
+        <div class="two-col">
+          <div class="col">
+            <h3>Two training regimes</h3>
+            <ul>
+              <li><strong>Phase 1 — BoolQ.</strong> Per-task fine-tune on the full 9,427-example train split. <em>Tier 2 only.</em></li>
+              <li><strong>Phase 2 — <code>commonsense_170k</code>.</strong> Paper's multi-task mix (BoolQ + 7 other commonsense tasks). T2: step-capped at 2,500. T3: stretched to <strong>10k steps</strong> (~31% of paper's ~32k), warmup proportionally scaled to 400.</li>
+            </ul>
+          </div>
+          <div class="col">
+            <h3>Two evaluation metrics</h3>
+            <ul>
+              <li><strong>Likelihood</strong> — first-token Yes/No logprob ratio. Parser-independent <em>internal probe</em>.</li>
+              <li><strong>Generation exact-match (<code>genmatch</code>)</strong> — greedy decode + parser + exact-match. <em>Paper-style</em>; sensitive to format collapse.</li>
+            </ul>
+            <p class="footnote">Both metrics evaluated on the full BoolQ dev set (3,270 examples) for every run.</p>
+          </div>
+        </div>
+
+        <h3>Sweep totals</h3>
+        <table class="compact">
+          <thead><tr><th>Tier</th><th>Configuration</th><th class="num">Runs</th><th>Seeds</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td>Pilot LoRA-vs-DoRA rank sweep, BoolQ only</td><td class="num">6</td><td><code>{42}</code> (n=1)</td></tr>
+            <tr><td>2</td><td>2 methods × 3 ranks × 3 seeds × 2 regimes + zero-shot</td><td class="num">37</td><td><code>{42, 1, 2}</code></td></tr>
+            <tr><td>3</td><td>2 methods × 3 ranks × 4 seeds × cs170k @ 10k</td><td class="num">24</td><td><code>{114, 514, 1919, 810}</code> — disjoint from T2</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Compute</h3>
+        <p>UniMelb Spartan HPC, <code>gpu-h100</code> partition. Tier 2 ≈ 25 GPU-h. Tier 3 ≈ 114 GPU-h (~84 training + ~30 gen-eval), wall-time ≈ 14 h with 8–10 jobs in parallel. All training/eval reproducible via <code>uv.lock</code>-pinned deps + per-run config YAMLs committed alongside <code>metrics.json</code>.</p>
+      </div>
+
     </div>
   </section>
 
@@ -110,54 +177,102 @@
   <!-- ============================================================== -->
   <section id="s3" class="slide">
     <div class="slide-content">
-      <h1 class="slide-heading">Tier 2 — and the parser-fix discovery</h1>
 
-      <p><strong>Phase 1 (BoolQ) — null on task accuracy.</strong> 18 runs (LoRA/DoRA × r ∈ {4, 8, 16} × 3 seeds). Every DoRA−LoRA gap within seed std on both metrics. The per-task instruct-model regime is exactly where no DoRA edge is expected — this sets up Phase 2 as the designed contrast.</p>
+      <div class="mode-pres">
+        <h1 class="slide-heading">The parser-fix discovery</h1>
+        <p class="lede">Phase 2 first reading: one run scored worse than chance. So I dumped 20 generations.</p>
 
-      <p><strong>Phase 2 (cs170k) — first reading looked dramatic.</strong> Genmatch at r=4 was <strong>0.0003</strong> for one LoRA run — worse than chance on a binary task. DoRA showed an apparent +0.056 edge at r=8 and r=16. Looked like the paper's collapse pattern reproducing.</p>
+        <table class="diagnosis">
+          <thead>
+            <tr><th>Run</th><th class="num">r</th><th>What the model emits</th><th class="num">Strict</th><th class="num">Broad</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>lora_r4_s1</code></td>
+              <td class="num">4</td>
+              <td>"the correct answer is <strong>yes/no</strong>"</td>
+              <td class="num bad">0.0003</td>
+              <td class="num good">0.846</td>
+            </tr>
+            <tr>
+              <td><code>dora_r16_s1</code></td>
+              <td class="num">16</td>
+              <td>"the correct answer is <strong>true/false</strong>"</td>
+              <td class="num">0.793</td>
+              <td class="num">0.799</td>
+            </tr>
+          </tbody>
+        </table>
 
-      <p><strong>Diagnosis</strong> (eyeball generations via <code>--debug-print N</code>):</p>
+        <div class="insight-box">
+          <p><strong>One metric, two effects.</strong> Strict parser = format adaptation. Broad parser = task accuracy. Separating them was the project's biggest analytical move.</p>
+        </div>
 
-      <table class="diagnosis">
-        <thead>
-          <tr><th>Run</th><th class="num">r</th><th>What the model emits (20 inspected)</th><th class="num">Strict</th><th class="num">Broad</th></tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td><code>lora_r4_s1</code></td>
-            <td class="num">4</td>
-            <td>"the correct answer is <strong>yes/no</strong>"</td>
-            <td class="num bad">0.0003</td>
-            <td class="num good">0.846</td>
-          </tr>
-          <tr>
-            <td><code>dora_r16_s1</code></td>
-            <td class="num">16</td>
-            <td>"the correct answer is <strong>true/false</strong>"</td>
-            <td class="num">0.793</td>
-            <td class="num">0.799</td>
-          </tr>
-        </tbody>
-      </table>
-
-      <p>Low-rank models answered correctly <em>in yes/no</em> (the BoolQ eval prompt's instruction). High-rank models overrode the prompt with their cs170k training format (true/false). Our parser only matched true/false.</p>
-
-      <div class="insight-box">
-        <p><strong>Insight.</strong> The cs170k genmatch metric was implicitly measuring two different things — <strong>task accuracy</strong> (broad parser, accepts either vocabulary) and <strong>format-adaptation strength</strong> (strict parser, only true/false). Broadening the parser disentangled them.</p>
+        <figure class="slide-figure fig-compact">
+          <img src="figures/format_adaptation.svg" alt="Format adaptation — broad vs strict parser by rank">
+          <button class="fullscreen-btn" type="button" aria-label="Expand image to fullscreen">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="3 9 3 3 9 3"></polyline>
+              <polyline points="15 3 21 3 21 9"></polyline>
+              <polyline points="3 15 3 21 9 21"></polyline>
+              <polyline points="15 21 21 21 21 15"></polyline>
+            </svg>
+          </button>
+          <figcaption>Broad (solid) flat near ~0.82; strict (dashed) climbs with rank. Two stories from one set of outputs.</figcaption>
+        </figure>
       </div>
 
-      <figure class="slide-figure">
-        <img src="figures/format_adaptation.svg" alt="Format adaptation — broad vs strict parser by rank">
-        <button class="fullscreen-btn" type="button" aria-label="Expand image to fullscreen">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <polyline points="3 9 3 3 9 3"></polyline>
-            <polyline points="15 3 21 3 21 9"></polyline>
-            <polyline points="3 15 3 21 9 21"></polyline>
-            <polyline points="15 21 21 21 21 15"></polyline>
-          </svg>
-        </button>
-        <figcaption>Broad parser (solid) sits flat near ~0.82 across ranks; strict parser (dashed) climbs from ~0.10 at r=4 to ~0.60 at r=16. Two different stories from the same model outputs.</figcaption>
-      </figure>
+      <div class="mode-verb">
+        <h1 class="slide-heading">Tier 2 — and the parser-fix discovery</h1>
+
+        <p><strong>Phase 1 (BoolQ) — null on task accuracy.</strong> 18 runs (LoRA/DoRA × r ∈ {4, 8, 16} × 3 seeds). Every DoRA−LoRA gap within seed std on both metrics. The per-task instruct-model regime is exactly where no DoRA edge is expected — this sets up Phase 2 as the designed contrast.</p>
+
+        <p><strong>Phase 2 (cs170k) — first reading looked dramatic.</strong> Genmatch at r=4 was <strong>0.0003</strong> for one LoRA run — worse than chance on a binary task. DoRA showed an apparent +0.056 edge at r=8 and r=16. Looked like the paper's collapse pattern reproducing.</p>
+
+        <p><strong>Diagnosis</strong> (eyeball generations via <code>--debug-print N</code>):</p>
+
+        <table class="diagnosis">
+          <thead>
+            <tr><th>Run</th><th class="num">r</th><th>What the model emits (20 inspected)</th><th class="num">Strict</th><th class="num">Broad</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>lora_r4_s1</code></td>
+              <td class="num">4</td>
+              <td>"the correct answer is <strong>yes/no</strong>"</td>
+              <td class="num bad">0.0003</td>
+              <td class="num good">0.846</td>
+            </tr>
+            <tr>
+              <td><code>dora_r16_s1</code></td>
+              <td class="num">16</td>
+              <td>"the correct answer is <strong>true/false</strong>"</td>
+              <td class="num">0.793</td>
+              <td class="num">0.799</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p>Low-rank models answered correctly <em>in yes/no</em> (the BoolQ eval prompt's instruction). High-rank models overrode the prompt with their cs170k training format (true/false). Our parser only matched true/false.</p>
+
+        <div class="insight-box">
+          <p><strong>Insight.</strong> The cs170k genmatch metric was implicitly measuring two different things — <strong>task accuracy</strong> (broad parser, accepts either vocabulary) and <strong>format-adaptation strength</strong> (strict parser, only true/false). Broadening the parser disentangled them.</p>
+        </div>
+
+        <figure class="slide-figure">
+          <img src="figures/format_adaptation.svg" alt="Format adaptation — broad vs strict parser by rank">
+          <button class="fullscreen-btn" type="button" aria-label="Expand image to fullscreen">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="3 9 3 3 9 3"></polyline>
+              <polyline points="15 3 21 3 21 9"></polyline>
+              <polyline points="3 15 3 21 9 21"></polyline>
+              <polyline points="15 21 21 21 21 15"></polyline>
+            </svg>
+          </button>
+          <figcaption>Broad parser (solid) sits flat near ~0.82 across ranks; strict parser (dashed) climbs from ~0.10 at r=4 to ~0.60 at r=16. Two different stories from the same model outputs.</figcaption>
+        </figure>
+      </div>
+
     </div>
   </section>
 
@@ -166,34 +281,93 @@
   <!-- ============================================================== -->
   <section id="s4" class="slide">
     <div class="slide-content">
-      <h1 class="slide-heading">Tier 2 conclusions</h1>
-      <p class="lede">Null on task accuracy. Inverse-rank trend hinted. DoRA cost overhead firm.</p>
 
-      <h3>Phase 2 (cs170k) cell means — broad-parser genmatch (n=3)</h3>
-      <table class="cells">
-        <thead>
-          <tr><th></th><th class="num">r=4</th><th class="num">r=8</th><th class="num">r=16</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>LoRA</td><td class="num">0.849 ± 0.003</td><td class="num">0.838 ± 0.001</td><td class="num">0.816 ± 0.019</td></tr>
-          <tr><td>DoRA</td><td class="num">0.850 ± 0.006</td><td class="num">0.840 ± 0.014</td><td class="num">0.784 ± 0.014</td></tr>
-          <tr class="delta-row"><td><strong>DoRA − LoRA</strong></td><td class="num">+0.001</td><td class="num">+0.002</td><td class="num bad">−0.032</td></tr>
-        </tbody>
-      </table>
+      <div class="mode-pres">
+        <h1 class="slide-heading">Tier 2 — null on task accuracy</h1>
+        <p class="lede">Three findings under the broad parser.</p>
 
-      <ul class="findings">
-        <li><strong>DoRA − LoRA gap within seed std at r ∈ {4, 8}.</strong> At r=16 DoRA loses −0.032 — <em>direction-consistent across all 3 seeds</em> (every seed pair shows DoRA &lt; LoRA), gap exceeds seed std; n=3 below formal significance.</li>
-        <li><strong>Strict-parser DoRA cell-mean edge:</strong> +0.056 at r=8 and r=16. Seed std wide (0.16–0.35); per-seed direction is split (DoRA wins 2 of 3 seeds at r=8, only 1 of 3 at r=16). <em>A hint matching the paper's hypothesis on format adaptation — not significant evidence.</em></li>
-        <li><strong>Inverse-rank trend (hint).</strong> Broad genmatch decreases with rank. r=4 beats zero-shot (~0.82) by ~3 pp; r=16 underperforms by ~3–4 pp. More PEFT capacity = more drift from BoolQ-optimal toward the broader cs170k distribution. Signal ~3 pp — within "could-be-noise" range at n=3.</li>
-        <li><strong>Cost reconfirmed:</strong> DoRA ~3.3× wall-time, ~1.8× peak GPU memory at every rank, both regimes.</li>
-      </ul>
+        <figure class="slide-figure fig-hero">
+          <img src="figures/rank_sensitivity.svg" alt="Rank sensitivity at Tier 2 — BoolQ and cs170k regimes vs zero-shot reference">
+          <button class="fullscreen-btn" type="button" aria-label="Expand image to fullscreen">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="3 9 3 3 9 3"></polyline>
+              <polyline points="15 3 21 3 21 9"></polyline>
+              <polyline points="3 15 3 21 9 21"></polyline>
+              <polyline points="15 21 21 21 21 15"></polyline>
+            </svg>
+          </button>
+          <figcaption>BoolQ (left) and cs170k (right) rank sensitivity. cs170k panel shows the inverse-rank trend at ~3 pp.</figcaption>
+        </figure>
 
-      <p class="verdict"><strong>Verdict on the paper's claim:</strong> <em>"DoRA wins more at low rank" does not replicate as a task-accuracy improvement in our setup.</em> The directional hint is on format adaptation, below significance at n=3.</p>
+        <ul class="findings-slim">
+          <li><strong>Task null</strong> at r ∈ {4, 8}; r=16 a 3-seed-consistent –3 pp</li>
+          <li><strong>Format hint</strong>, per-seed split — not significant evidence</li>
+          <li><strong>Inverse-rank ~3 pp</strong> — within noise at n=3</li>
+        </ul>
 
-      <p class="open-question"><strong>Open question coming out of T2:</strong> does the inverse-rank trend sharpen at longer training + more seeds, and does the strict-parser DoRA edge cross significance? That's why we ran T3.</p>
+        <p class="verdict"><strong>Verdict:</strong> the paper's "low-rank wins" doesn't replicate as task accuracy — <em>yet</em>.</p>
+      </div>
 
-      <figure class="slide-figure">
-        <img src="figures/rank_sensitivity.svg" alt="Rank sensitivity at Tier 2 — BoolQ and cs170k regimes vs zero-shot reference">
+      <div class="mode-verb">
+        <h1 class="slide-heading">Tier 2 conclusions</h1>
+        <p class="lede">Null on task accuracy. Inverse-rank trend hinted. DoRA cost overhead firm.</p>
+
+        <h3>Phase 2 (cs170k) cell means — broad-parser genmatch (n=3)</h3>
+        <table class="cells">
+          <thead>
+            <tr><th></th><th class="num">r=4</th><th class="num">r=8</th><th class="num">r=16</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>LoRA</td><td class="num">0.849 ± 0.003</td><td class="num">0.838 ± 0.001</td><td class="num">0.816 ± 0.019</td></tr>
+            <tr><td>DoRA</td><td class="num">0.850 ± 0.006</td><td class="num">0.840 ± 0.014</td><td class="num">0.784 ± 0.014</td></tr>
+            <tr class="delta-row"><td><strong>DoRA − LoRA</strong></td><td class="num">+0.001</td><td class="num">+0.002</td><td class="num bad">−0.032</td></tr>
+          </tbody>
+        </table>
+
+        <ul class="findings">
+          <li><strong>DoRA − LoRA gap within seed std at r ∈ {4, 8}.</strong> At r=16 DoRA loses −0.032 — <em>direction-consistent across all 3 seeds</em> (every seed pair shows DoRA &lt; LoRA), gap exceeds seed std; n=3 below formal significance.</li>
+          <li><strong>Strict-parser DoRA cell-mean edge:</strong> +0.056 at r=8 and r=16. Seed std wide (0.16–0.35); per-seed direction is split (DoRA wins 2 of 3 seeds at r=8, only 1 of 3 at r=16). <em>A hint matching the paper's hypothesis on format adaptation — not significant evidence.</em></li>
+          <li><strong>Inverse-rank trend (hint).</strong> Broad genmatch decreases with rank. r=4 beats zero-shot (~0.82) by ~3 pp; r=16 underperforms by ~3–4 pp. More PEFT capacity = more drift from BoolQ-optimal toward the broader cs170k distribution. Signal ~3 pp — within "could-be-noise" range at n=3.</li>
+          <li><strong>Cost reconfirmed:</strong> DoRA ~3.3× wall-time, ~1.8× peak GPU memory at every rank, both regimes.</li>
+        </ul>
+
+        <p class="verdict"><strong>Verdict on the paper's claim:</strong> <em>"DoRA wins more at low rank" does not replicate as a task-accuracy improvement in our setup.</em> The directional hint is on format adaptation, below significance at n=3.</p>
+
+        <p class="open-question"><strong>Open question coming out of T2:</strong> does the inverse-rank trend sharpen at longer training + more seeds, and does the strict-parser DoRA edge cross significance? That's why we ran T3.</p>
+
+        <figure class="slide-figure">
+          <img src="figures/rank_sensitivity.svg" alt="Rank sensitivity at Tier 2 — BoolQ and cs170k regimes vs zero-shot reference">
+          <button class="fullscreen-btn" type="button" aria-label="Expand image to fullscreen">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="3 9 3 3 9 3"></polyline>
+              <polyline points="15 3 21 3 21 9"></polyline>
+              <polyline points="3 15 3 21 9 21"></polyline>
+              <polyline points="15 21 21 21 21 15"></polyline>
+            </svg>
+          </button>
+          <figcaption>Rank sensitivity at Tier 2. Right panel (cs170k) shows the inverse-rank trend vs zero-shot reference.</figcaption>
+        </figure>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============================================================== -->
+  <!-- Slide 5 — Tier 3 sharper signals                               -->
+  <!-- ============================================================== -->
+  <section id="s5" class="slide">
+  <div class="slide-content">
+
+    <div class="mode-pres">
+      <h1 class="slide-heading">Tier 3 — sharper signals</h1>
+      <p class="lede">What changes at 4× training, n=4?</p>
+
+      <p class="hero-num">14–16 pp</p>
+      <p class="hero-cap">inverse-rank gap within each method · ~5× the Tier 2 signal</p>
+      <p class="hero-sentence">More PEFT capacity + longer training = more drift from BoolQ-optimal toward the cs170k mix.</p>
+
+      <figure class="slide-figure fig-compact">
+        <img src="figures/tier3/rank_sensitivity.svg" alt="Rank sensitivity at Tier 3 — likelihood vs genmatch divergence with zero-shot reference">
         <button class="fullscreen-btn" type="button" aria-label="Expand image to fullscreen">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <polyline points="3 9 3 3 9 3"></polyline>
@@ -202,16 +376,16 @@
             <polyline points="15 21 21 21 21 15"></polyline>
           </svg>
         </button>
-        <figcaption>Rank sensitivity at Tier 2. Right panel (cs170k) shows the inverse-rank trend vs zero-shot reference.</figcaption>
+        <figcaption>Tier 3 rank sensitivity. Likelihood collapses with rank; genmatch holds.</figcaption>
       </figure>
-    </div>
-  </section>
 
-  <!-- ============================================================== -->
-  <!-- Slide 5 — Tier 3 sharper signals                               -->
-  <!-- ============================================================== -->
-  <section id="s5" class="slide">
-    <div class="slide-content">
+      <div class="chip-row">
+        <span class="chip">Format split holds</span>
+        <span class="chip">DoRA preserves format · not accuracy</span>
+      </div>
+    </div>
+
+    <div class="mode-verb">
       <h1 class="slide-heading">Tier 3 — sharper signals at 4× training</h1>
       <p class="lede">Same cs170k recipe, 10k steps, n=4 with new disjoint seeds <code>{114, 514, 1919, 810}</code> — T2 numbers stay verifiably untouched.</p>
 
@@ -250,13 +424,40 @@
         <figcaption>Tier 3 rank sensitivity. Likelihood collapses with rank; genmatch holds with only modest degradation. The two curves separate as cs170k training overrides the BoolQ-yes/no format.</figcaption>
       </figure>
     </div>
-  </section>
+
+  </div>
+</section>
 
   <!-- ============================================================== -->
   <!-- Slide 6 — Wrap-up                                              -->
   <!-- ============================================================== -->
   <section id="s6" class="slide">
-    <div class="slide-content">
+  <div class="slide-content">
+
+    <div class="mode-pres">
+      <h1 class="slide-heading">Conclusions</h1>
+
+      <div class="takeaway-tiles">
+        <div class="takeaway-tile">
+          <p class="tile-label">1 · Task edge</p>
+          <p class="tile-body">doesn't replicate. <em>7 seeds, 2 budgets.</em></p>
+        </div>
+        <div class="takeaway-tile">
+          <p class="tile-label">2 · Real edge</p>
+          <p class="tile-body">is in <strong>format preservation</strong>, not accuracy.</p>
+        </div>
+        <div class="takeaway-tile">
+          <p class="tile-label">3 · Trend</p>
+          <p class="tile-body">inverse-rank <strong>sharpens at scale</strong> — 3 → 14–16 pp.</p>
+        </div>
+      </div>
+
+      <p class="cost-line">DoRA · 3.3× wall-time · 1.8× peak memory</p>
+
+      <p class="closing-line">"Null results aren't no results — and the inverse-rank trend that was below the noise floor at Tier 2 is the project's clearest scientific finding at Tier 3."</p>
+    </div>
+
+    <div class="mode-verb">
       <h1 class="slide-heading">Conclusions</h1>
 
       <ol class="takeaways">
@@ -287,7 +488,9 @@
 
       <p class="closing-line">"Null results aren't no results — and the inverse-rank trend that was below the noise floor at Tier 2 is the project's clearest scientific finding at Tier 3."</p>
     </div>
-  </section>
+
+  </div>
+</section>
 
 </main>
 

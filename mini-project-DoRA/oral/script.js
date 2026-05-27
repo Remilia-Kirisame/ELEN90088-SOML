@@ -225,3 +225,77 @@
     }
   }, true); // capture phase — runs before the slide-nav handler
 })();
+
+/* ============================================================
+   Mode toggle — Presentation ⇄ Verbose
+   Independent IIFE; does not interact with the nav / lightbox.
+   ============================================================ */
+(() => {
+  const MODES = ['presentation', 'verbose'];
+  const STORAGE_KEY = 'dora-oral-mode';
+
+  const toggleEl = document.querySelector('.mode-toggle');
+  if (!toggleEl) return;
+  const segments = toggleEl.querySelectorAll('[data-mode]');
+
+  function readPreferredMode() {
+    const fromUrl = new URLSearchParams(location.search).get('mode');
+    if (MODES.includes(fromUrl)) return fromUrl;
+    const fromStore = localStorage.getItem(STORAGE_KEY);
+    if (MODES.includes(fromStore)) return fromStore;
+    return 'presentation';
+  }
+
+  function applyMode(mode) {
+    document.body.classList.toggle('presentation-mode', mode === 'presentation');
+    document.body.classList.toggle('verbose-mode', mode === 'verbose');
+    try { localStorage.setItem(STORAGE_KEY, mode); } catch (_) { /* ignore quota errors */ }
+    segments.forEach((seg) => {
+      seg.classList.toggle('active', seg.dataset.mode === mode);
+    });
+  }
+
+  function currentMode() {
+    return document.body.classList.contains('verbose-mode') ? 'verbose' : 'presentation';
+  }
+
+  function setMode(mode) {
+    if (!MODES.includes(mode)) return;
+    if (currentMode() === mode) return;
+    if (document.startViewTransition) {
+      document.startViewTransition(() => applyMode(mode));
+    } else {
+      applyMode(mode);
+    }
+  }
+
+  function toggleMode() {
+    setMode(currentMode() === 'presentation' ? 'verbose' : 'presentation');
+  }
+
+  // Apply initial mode synchronously — no transition for the first paint.
+  applyMode(readPreferredMode());
+
+  // Click handler on each segment.
+  segments.forEach((seg) => {
+    seg.addEventListener('click', () => {
+      setMode(seg.dataset.mode);
+      seg.blur();
+    });
+  });
+
+  // Global 'm' key toggles mode. Don't fire inside form fields or with
+  // modifiers, and don't fire when the lightbox is open (the existing
+  // capture-phase lightbox handler will stopPropagation for nav keys, but
+  // 'm' isn't in its swallow list, so we guard here defensively).
+  document.addEventListener('keydown', (e) => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    if (e.key === 'm' || e.key === 'M') {
+      const lightbox = document.getElementById('lightbox');
+      if (lightbox && !lightbox.hidden) return;
+      e.preventDefault();
+      toggleMode();
+    }
+  });
+})();

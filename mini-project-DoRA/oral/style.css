@@ -1,0 +1,797 @@
+/* ==========================================================================
+   DoRA oral deck — minimal academic style
+   Off-white bg, near-black text, navy accent. Sans-serif throughout.
+   6 slides, scroll-snap, sticky side-nav, keyboard navigable.
+   ========================================================================== */
+
+:root {
+  --bg: #fafaf9;
+  --bg-elev: #ffffff;
+  --bg-muted: #f5f5f4;
+  --text: #1c1917;
+  --text-muted: #57534e;
+  --text-faint: #a8a29e;
+  --border: #e7e5e4;
+  --border-strong: #d6d3d1;
+  --accent: #1e3a5f;
+  --accent-soft: #e0e7f0;
+  --good: #166534;
+  --bad: #991b1b;
+  --highlight-bg: #fef9c3;
+
+  --nav-w: 240px;
+  --content-max: 920px;
+
+  --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+               "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Consolas,
+               "Liberation Mono", Menlo, monospace;
+  --font-serif: ui-serif, "Charter", "New York", Cambria, Georgia, serif;
+
+  --radius: 6px;
+  --shadow: 0 1px 2px rgba(28, 25, 23, 0.04),
+            0 4px 12px rgba(28, 25, 23, 0.04);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* --------------------------------------------------------------------------
+   Side navigation
+   -------------------------------------------------------------------------- */
+
+.sidenav {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: var(--nav-w);
+  height: 100vh;
+  padding: 28px 20px;
+  border-right: 1px solid var(--border);
+  background: var(--bg-elev);
+  display: flex;
+  flex-direction: column;
+  z-index: 10;
+}
+
+.sidenav-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 28px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sidenav-header .course {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.sidenav-header .meta {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.sidenav-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  flex: 1;
+}
+
+.sidenav-list li {
+  margin-bottom: 4px;
+}
+
+.sidenav-list a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  text-decoration: none;
+  color: var(--text-muted);
+  font-size: 13.5px;
+  line-height: 1.3;
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.sidenav-list a:hover {
+  background: var(--bg-muted);
+  color: var(--text);
+}
+
+/* Suppress the default mouse-click focus ring (we blur after click in JS,
+   but this is defensive in case any browser still paints it briefly). */
+.sidenav-list a:focus { outline: none; }
+
+/* Restore an accessible focus indicator for keyboard tab-users only.
+   :focus-visible is browser-managed and only matches keyboard focus, not
+   pointer clicks — so screen-reader / keyboard-only users still get a
+   clear indicator without leaving stranded rings after mouse clicks. */
+.sidenav-list a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.sidenav-list a.active {
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.sidenav-list .num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--bg-muted);
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.sidenav-list a.active .num {
+  background: var(--accent);
+  color: white;
+}
+
+.sidenav-list .lbl {
+  flex: 1;
+}
+
+.sidenav-footer {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--text-faint);
+  display: flex;
+  justify-content: center;
+}
+
+kbd {
+  display: inline-block;
+  padding: 1px 5px;
+  border: 1px solid var(--border-strong);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  background: var(--bg-muted);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--text);
+  line-height: 1;
+}
+
+/* --------------------------------------------------------------------------
+   Slides container — the scrolling region
+   -------------------------------------------------------------------------- */
+
+.slides {
+  margin-left: var(--nav-w);
+  height: 100vh;
+  overflow-y: auto;
+  scroll-snap-type: y mandatory;
+  scroll-behavior: smooth;
+}
+
+.slide {
+  scroll-snap-align: start;
+  min-height: 100vh;
+  padding: 64px 80px 88px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: center;
+}
+
+.slide-content {
+  width: 100%;
+  max-width: var(--content-max);
+}
+
+.slide:last-child { border-bottom: none; }
+
+/* --------------------------------------------------------------------------
+   Typography
+   -------------------------------------------------------------------------- */
+
+h1.title {
+  font-family: var(--font-serif);
+  font-size: 56px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  margin: 0 0 12px;
+  color: var(--text);
+}
+
+p.subtitle {
+  font-size: 22px;
+  font-weight: 400;
+  color: var(--text-muted);
+  margin: 0 0 28px;
+  line-height: 1.35;
+  font-family: var(--font-serif);
+  font-style: italic;
+}
+
+p.presenter {
+  font-size: 14px;
+  color: var(--text-faint);
+  margin: 0 0 36px;
+  letter-spacing: 0.01em;
+}
+
+p.eyebrow {
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0 0 28px;
+}
+
+h1.slide-heading {
+  font-size: 36px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  line-height: 1.15;
+  margin: 0 0 8px;
+  color: var(--text);
+}
+
+p.lede {
+  font-size: 17px;
+  color: var(--text-muted);
+  margin: 0 0 28px;
+  line-height: 1.5;
+}
+
+h3 {
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin: 28px 0 10px;
+}
+
+p {
+  margin: 0 0 14px;
+  max-width: 75ch;
+}
+
+ul, ol {
+  margin: 0 0 16px;
+  padding-left: 22px;
+}
+
+li {
+  margin-bottom: 10px;
+  line-height: 1.5;
+}
+
+li:last-child { margin-bottom: 0; }
+
+strong { color: var(--text); font-weight: 600; }
+em { font-style: italic; color: var(--text); }
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.875em;
+  background: var(--bg-muted);
+  padding: 1px 5px;
+  border-radius: 3px;
+  border: 1px solid var(--border);
+  color: var(--accent);
+}
+
+/* --------------------------------------------------------------------------
+   Slide 1 — title-specific bits
+   -------------------------------------------------------------------------- */
+
+.slide-title .slide-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: calc(100vh - 64px - 88px);
+}
+
+.question-box {
+  border-left: 3px solid var(--accent);
+  padding: 14px 20px;
+  margin: 24px 0 36px;
+  background: var(--bg-elev);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+
+.question-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0 0 4px;
+}
+
+.question-text {
+  font-size: 20px;
+  margin: 0;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.tier-timeline {
+  display: flex;
+  align-items: stretch;
+  gap: 12px;
+  margin: 12px 0 28px;
+  flex-wrap: wrap;
+}
+
+.tier {
+  flex: 1;
+  min-width: 180px;
+  padding: 14px 16px;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tier-main {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.tier-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.tier-desc {
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.35;
+}
+
+.arrow {
+  display: flex;
+  align-items: center;
+  color: var(--text-faint);
+  font-size: 18px;
+  font-weight: 300;
+}
+
+.frame-note {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-top: 8px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  max-width: 75ch;
+}
+
+/* --------------------------------------------------------------------------
+   Tables
+   -------------------------------------------------------------------------- */
+
+table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin: 8px 0 24px;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  font-size: 14px;
+}
+
+thead th {
+  background: var(--bg-muted);
+  text-align: left;
+  font-weight: 600;
+  color: var(--text);
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+  letter-spacing: 0.02em;
+}
+
+tbody td {
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+
+tbody tr:last-child td { border-bottom: none; }
+
+.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+th.num { text-align: right; }
+
+td.good { color: var(--good); }
+td.bad { color: var(--bad); }
+
+td.num.good { color: var(--good); background: rgba(22, 101, 52, 0.06); }
+td.num.bad { color: var(--bad); background: rgba(153, 27, 27, 0.06); }
+
+table.compact { font-size: 13.5px; }
+table.compact td, table.compact th { padding: 6px 12px; }
+
+table.cells .delta-row td {
+  border-top: 1px solid var(--border-strong);
+  background: var(--bg-muted);
+  font-weight: 600;
+}
+
+table.diagnosis td:nth-child(3) {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+.metric-row td.metric-label {
+  background: var(--bg-muted);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent);
+  padding: 6px 14px;
+  border-top: 1px solid var(--border-strong);
+  border-bottom: 1px solid var(--border);
+}
+
+.metric-row td.metric-label em {
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--text-muted);
+  margin-left: 6px;
+}
+
+/* --------------------------------------------------------------------------
+   Two-column blocks (Slide 2)
+   -------------------------------------------------------------------------- */
+
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.two-col .col h3 {
+  margin-top: 0;
+}
+
+.footnote {
+  font-size: 13px;
+  color: var(--text-faint);
+  font-style: italic;
+}
+
+/* --------------------------------------------------------------------------
+   Insight / verdict / closing boxes
+   -------------------------------------------------------------------------- */
+
+.insight-box {
+  margin: 24px 0;
+  padding: 16px 20px;
+  background: var(--accent-soft);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+
+.insight-box p { margin: 0; max-width: none; }
+
+.verdict {
+  margin: 20px 0;
+  padding: 14px 18px;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  font-size: 15px;
+}
+
+.open-question {
+  margin: 16px 0 24px;
+  font-size: 14px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.closing-line {
+  margin: 36px 0 0;
+  padding: 20px 24px;
+  background: var(--accent-soft);
+  border-radius: var(--radius);
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 19px;
+  line-height: 1.45;
+  color: var(--accent);
+  text-align: center;
+  max-width: none;
+}
+
+/* --------------------------------------------------------------------------
+   Findings / takeaways lists
+   -------------------------------------------------------------------------- */
+
+ol.findings, ol.takeaways {
+  list-style: none;
+  padding-left: 0;
+  counter-reset: finding;
+}
+
+ol.findings > li, ol.takeaways > li {
+  counter-increment: finding;
+  position: relative;
+  padding-left: 36px;
+  margin-bottom: 14px;
+}
+
+ol.findings > li::before, ol.takeaways > li::before {
+  content: counter(finding);
+  position: absolute;
+  left: 0;
+  top: 1px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+ul.findings { list-style: disc; padding-left: 22px; }
+ul.findings > li { padding-left: 0; margin-bottom: 12px; }
+
+/* --------------------------------------------------------------------------
+   Figures
+   -------------------------------------------------------------------------- */
+
+.slide-figure {
+  position: relative;
+  margin: 28px 0 0;
+  padding: 0;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.slide-figure img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 380px;
+  object-fit: contain;
+  background: white;
+  padding: 12px;
+}
+
+.slide-figure figcaption {
+  padding: 10px 16px;
+  font-size: 12.5px;
+  color: var(--text-muted);
+  background: var(--bg-muted);
+  border-top: 1px solid var(--border);
+  font-style: italic;
+  line-height: 1.4;
+}
+
+/* --------------------------------------------------------------------------
+   Fullscreen button — appears in figure's top-right on hover
+   -------------------------------------------------------------------------- */
+
+.fullscreen-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(28, 25, 23, 0.7);
+  color: white;
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(-2px);
+  transition: opacity 0.18s ease, transform 0.18s ease, background-color 0.15s;
+  padding: 0;
+  z-index: 2;
+}
+
+.slide-figure:hover .fullscreen-btn,
+.fullscreen-btn:focus-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.fullscreen-btn:hover {
+  background: var(--accent);
+}
+
+.fullscreen-btn:focus { outline: none; }
+.fullscreen-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* --------------------------------------------------------------------------
+   Lightbox — modal overlay for fullscreen image view
+   -------------------------------------------------------------------------- */
+
+.lightbox {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 14, 13, 0.92);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 100;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.lightbox[hidden] {
+  display: none;
+}
+
+.lightbox.open {
+  opacity: 1;
+}
+
+.lightbox-figure {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+}
+
+.lightbox-img {
+  /* Force an explicit width so SVGs upscale past their ~866px natural size.
+     max-height caps if the image's aspect ratio would push it past the
+     viewport; the browser maintains aspect ratio under the cap. */
+  width: 95vw;
+  max-height: calc(100vh - 200px);
+  height: auto;
+  box-sizing: border-box;
+  background: white;
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+}
+
+.lightbox-caption {
+  max-width: min(1200px, 90vw);
+  color: rgba(255, 255, 255, 0.95);
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.45;
+  font-style: italic;
+  text-align: center;
+}
+
+.lightbox-caption:empty { display: none; }
+
+.lightbox-close {
+  position: absolute;
+  top: 20px;
+  right: 24px;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background-color 0.15s;
+  padding: 0;
+}
+
+.lightbox-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.lightbox-close:focus { outline: none; }
+.lightbox-close:focus-visible {
+  outline: 2px solid white;
+  outline-offset: 2px;
+}
+
+/* Hide fullscreen affordances on print — they're meaningless on paper. */
+@media print {
+  .fullscreen-btn, .lightbox { display: none !important; }
+}
+
+/* --------------------------------------------------------------------------
+   Print styles — for the PDF backup
+   -------------------------------------------------------------------------- */
+
+@media print {
+  body { height: auto; overflow: visible; }
+  .sidenav { display: none; }
+  .slides { margin-left: 0; height: auto; overflow: visible; }
+  .slide {
+    page-break-after: always;
+    break-after: page;
+    min-height: auto;
+    padding: 48px 56px;
+    border-bottom: none;
+  }
+  .slide:last-child { page-break-after: avoid; }
+  .slide-title .slide-content { min-height: auto; }
+  .slide-figure { page-break-inside: avoid; break-inside: avoid; }
+  table { page-break-inside: avoid; break-inside: avoid; }
+  a { color: var(--text); text-decoration: none; }
+}
+
+/* --------------------------------------------------------------------------
+   Responsive — nav collapses on narrow screens (for editing on laptop)
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 900px) {
+  .sidenav { width: 60px; padding: 20px 8px; }
+  .sidenav-header, .sidenav-list .lbl, .sidenav-footer { display: none; }
+  .sidenav-list a { justify-content: center; padding: 8px; }
+  .slides { margin-left: 60px; }
+  .slide { padding: 40px 32px 56px; }
+  h1.title { font-size: 40px; }
+  .two-col { grid-template-columns: 1fr; }
+}

@@ -296,13 +296,13 @@
               <polyline points="15 21 21 21 21 15"></polyline>
             </svg>
           </button>
-          <figcaption>BoolQ (left) and cs170k (right) rank sensitivity. Solid = broad genmatch; dashed = likelihood. cs170k panel shows the inverse-rank trend at ~3 pp.</figcaption>
+          <figcaption>BoolQ (left) and cs170k (right) rank sensitivity. Solid = broad genmatch; dashed = likelihood. cs170k panel shows the inverse-rank trend (3-7 pp within-method).</figcaption>
         </figure>
 
         <ul class="findings-slim">
           <li><strong>Task null</strong> at r ∈ {4, 8}; r=16 a 3-seed-consistent –3 pp</li>
           <li><strong>Format hint</strong>, per-seed split — not significant evidence</li>
-          <li><strong>Inverse-rank ~3 pp</strong> — within noise at n=3</li>
+          <li><strong>Inverse-rank 3-7 pp</strong> within-method — within noise at n=3</li>
         </ul>
 
         <p class="verdict"><strong>Verdict:</strong> the paper's "low-rank wins" doesn't replicate as task accuracy — <em>yet</em>.</p>
@@ -312,22 +312,27 @@
         <h1 class="slide-heading">Tier 2 conclusions</h1>
         <p class="lede">Null on task accuracy. Inverse-rank trend hinted. DoRA cost overhead firm.</p>
 
-        <h3>Phase 2 (cs170k) cell means — broad-parser genmatch (n=3)</h3>
+        <h3>Phase 2 (cs170k) cell means (n=3)</h3>
         <table class="cells">
           <thead>
-            <tr><th></th><th class="num">r=4</th><th class="num">r=8</th><th class="num">r=16</th></tr>
+            <tr><th></th><th class="num">r=4</th><th class="num">r=8</th><th class="num">r=16</th><th class="num">r=4 → r=16</th></tr>
           </thead>
           <tbody>
-            <tr><td>LoRA</td><td class="num">0.849 ± 0.003</td><td class="num">0.838 ± 0.001</td><td class="num">0.816 ± 0.019</td></tr>
-            <tr><td>DoRA</td><td class="num">0.850 ± 0.006</td><td class="num">0.840 ± 0.014</td><td class="num">0.784 ± 0.014</td></tr>
-            <tr class="delta-row"><td><strong>DoRA − LoRA</strong></td><td class="num">+0.001</td><td class="num">+0.002</td><td class="num bad">−0.032</td></tr>
+            <tr class="metric-row"><td colspan="5" class="metric-label">Broad-parser genmatch — <em>task accuracy</em></td></tr>
+            <tr><td>LoRA</td><td class="num">0.849 ± 0.003</td><td class="num">0.838 ± 0.001</td><td class="num">0.816 ± 0.019</td><td class="num bad">−0.033</td></tr>
+            <tr><td>DoRA</td><td class="num">0.850 ± 0.006</td><td class="num">0.840 ± 0.014</td><td class="num">0.784 ± 0.014</td><td class="num bad">−0.066</td></tr>
+            <tr class="delta-row"><td><strong>DoRA − LoRA</strong></td><td class="num">+0.001</td><td class="num">+0.002</td><td class="num bad">−0.032</td><td class="num">—</td></tr>
+            <tr class="metric-row"><td colspan="5" class="metric-label">Strict-parser genmatch — <em>format-adaptation diagnostic</em></td></tr>
+            <tr><td>LoRA</td><td class="num">0.107 ± 0.166</td><td class="num">0.262 ± 0.350</td><td class="num">0.574 ± 0.228</td><td class="num">+0.467</td></tr>
+            <tr><td>DoRA</td><td class="num">0.098 ± 0.079</td><td class="num">0.318 ± 0.195</td><td class="num">0.630 ± 0.263</td><td class="num">+0.532</td></tr>
+            <tr class="delta-row"><td><strong>DoRA − LoRA</strong></td><td class="num">−0.009</td><td class="num good">+0.056</td><td class="num good">+0.055</td><td class="num">—</td></tr>
           </tbody>
         </table>
 
         <ul class="findings">
           <li><strong>DoRA − LoRA gap within seed std at r ∈ {4, 8}.</strong> At r=16 DoRA loses −0.032 — <em>direction-consistent across all 3 seeds</em> (every seed pair shows DoRA &lt; LoRA), gap exceeds seed std; n=3 below formal significance.</li>
           <li><strong>Strict-parser DoRA cell-mean edge:</strong> +0.056 at r=8 and r=16. Seed std wide (0.16–0.35); per-seed direction is split (DoRA wins 2 of 3 seeds at r=8, only 1 of 3 at r=16). <em>A hint matching the paper's hypothesis on format adaptation — not significant evidence.</em></li>
-          <li><strong>Inverse-rank trend (hint).</strong> Broad genmatch decreases with rank. r=4 beats zero-shot (~0.82) by ~3 pp; r=16 underperforms by ~3–4 pp. More PEFT capacity = more drift from BoolQ-optimal toward the broader cs170k distribution. Signal ~3 pp — within "could-be-noise" range at n=3.</li>
+          <li><strong>Inverse-rank trend (hint).</strong> Broad genmatch decreases with rank. r=4 beats zero-shot (~0.82) by ~3 pp; at r=16 LoRA returns to zero-shot, DoRA falls ~4 pp below. Within-method drop: LoRA 3.3 pp, DoRA 6.6 pp. More PEFT capacity = more drift from BoolQ-optimal toward the broader cs170k distribution. Signal in the 3-7 pp range — within "could-be-noise" at n=3.</li>
           <li><strong>Cost reconfirmed:</strong> DoRA ~3.3× wall-time, ~1.8× peak GPU memory at every rank, both regimes.</li>
         </ul>
 
@@ -363,7 +368,7 @@
       <p class="lede">What changes at 4× training, n=4?</p>
 
       <p class="hero-num">14–16 pp</p>
-      <p class="hero-cap">inverse-rank gap within each method · ~5× the Tier 2 signal</p>
+      <p class="hero-cap">inverse-rank gap within each method · ~2-4× the Tier 2 signal</p>
       <p class="hero-sentence">More PEFT capacity + longer training = more drift from BoolQ-optimal toward the cs170k mix.</p>
 
       <figure class="slide-figure fig-compact">
@@ -392,21 +397,21 @@
       <h3>cs170k cell means — both metrics, n=4</h3>
       <table class="cells">
         <thead>
-          <tr><th></th><th class="num">r=4</th><th class="num">r=8</th><th class="num">r=16</th></tr>
+          <tr><th></th><th class="num">r=4</th><th class="num">r=8</th><th class="num">r=16</th><th class="num">r=4 → r=16</th></tr>
         </thead>
         <tbody>
-          <tr class="metric-row"><td colspan="4" class="metric-label">Broad-parser genmatch — <em>the T3 task-accuracy metric</em></td></tr>
-          <tr><td>LoRA</td><td class="num">0.843 ± 0.015</td><td class="num">0.800 ± 0.011</td><td class="num">0.703 ± 0.053</td></tr>
-          <tr><td>DoRA</td><td class="num">0.827 ± 0.007</td><td class="num">0.808 ± 0.008</td><td class="num">0.665 ± 0.057</td></tr>
-          <tr class="metric-row"><td colspan="4" class="metric-label">Yes/No likelihood — <em>at T3, a format-preservation probe</em></td></tr>
-          <tr><td>LoRA</td><td class="num">0.764 ± 0.086</td><td class="num">0.462 ± 0.128</td><td class="num">0.382 ± 0.007</td></tr>
-          <tr><td>DoRA</td><td class="num">0.651 ± 0.204</td><td class="num good">0.618 ± 0.053</td><td class="num">0.441 ± 0.119</td></tr>
+          <tr class="metric-row"><td colspan="5" class="metric-label">Broad-parser genmatch — <em>the T3 task-accuracy metric</em></td></tr>
+          <tr><td>LoRA</td><td class="num">0.843 ± 0.015</td><td class="num">0.800 ± 0.011</td><td class="num">0.703 ± 0.053</td><td class="num bad">−0.140</td></tr>
+          <tr><td>DoRA</td><td class="num">0.827 ± 0.007</td><td class="num">0.808 ± 0.008</td><td class="num">0.665 ± 0.057</td><td class="num bad">−0.162</td></tr>
+          <tr class="metric-row"><td colspan="5" class="metric-label">Yes/No likelihood — <em>at T3, a format-preservation probe</em></td></tr>
+          <tr><td>LoRA</td><td class="num">0.764 ± 0.086</td><td class="num">0.462 ± 0.128</td><td class="num">0.382 ± 0.007</td><td class="num bad">−0.382</td></tr>
+          <tr><td>DoRA</td><td class="num">0.651 ± 0.204</td><td class="num good">0.618 ± 0.053</td><td class="num">0.441 ± 0.119</td><td class="num bad">−0.210</td></tr>
         </tbody>
       </table>
 
       <h3>Three findings, in priority order</h3>
       <ol class="findings">
-        <li><strong>The inverse-rank trend sharpens from ~3 pp to ~14–16 pp within-method on genmatch.</strong> LoRA 14 pp, DoRA 16 pp — ~5× Tier 2's signal. r=4 cells sit at-or-above zero-shot 0.82; r=16 cells drop into 0.66–0.71. <em>The project's clearest scientific finding.</em></li>
+        <li><strong>The inverse-rank trend sharpens within-method on genmatch.</strong> T2's within-method drop (LoRA 3.3 pp, DoRA 6.6) grows to T3's (LoRA 14 pp, DoRA 16) — ~2-4× amplification per method. r=4 cells sit at-or-above zero-shot 0.82; r=16 cells drop into 0.66–0.71. <em>The project's clearest scientific finding.</em></li>
         <li><strong>Methodological diagnostic scaled up — likelihood collapsed, genmatch held.</strong> Likelihood drops −0.10 to −0.40 vs T2; broad genmatch loss only −0.006 to −0.12. The model isn't broken — it has fully switched to cs170k's true/false vocabulary, so the yes/no likelihood probe misreads correct answers as wrong. <strong>Genmatch is the T3 task-accuracy metric; likelihood at T3 is a format-preservation probe.</strong></li>
         <li><strong>DoRA vs LoRA — refined, not contradicted.</strong> Task-accuracy null replicates on genmatch (gap within seed std at every rank). On likelihood, DoRA r=8 shows a <strong>+0.16 edge over LoRA r=8</strong>, well outside DoRA's r=8 seed std (~0.05); <strong>3 of 4 paired seeds favour DoRA</strong> by 0.18–0.25, LoRA wins the fourth (s114) by 0.02. Read with the matching genmatch gap (+0.008, basically zero): <em>DoRA at r=8 preserves the yes/no answer format better than LoRA at r=8, but does not produce more correct answers.</em></li>
       </ol>
@@ -448,7 +453,7 @@
         </div>
         <div class="takeaway-tile">
           <p class="tile-label">3 · Trend</p>
-          <p class="tile-body">inverse-rank <strong>sharpens at scale</strong> — 3 → 14–16 pp.</p>
+          <p class="tile-body">inverse-rank <strong>sharpens at scale</strong> — 3-7 → 14-16 pp.</p>
         </div>
       </div>
 
@@ -463,7 +468,7 @@
       <ol class="takeaways">
         <li><strong>"DoRA wins at low rank" does not replicate as a task-accuracy improvement</strong> in our Mistral-7B-Instruct + cs170k setup — neither at T2's 2,500-step budget nor at T3's 10k. Null supported by 7 seeds total (T2 n=3 + T3 n=4) across two training budgets.</li>
         <li><strong>DoRA's measurable edge over LoRA is in format preservation, not task accuracy.</strong> +0.056 T2 strict-genmatch cell-mean (a hint — per-seed-split) → +0.16 T3 r=8 likelihood edge (outside seed std at n=4, with 3 of 4 seeds favouring DoRA). Direction matches the paper's hypothesis on format adaptation; evidence sharpens with statistical power and training budget but remains qualified.</li>
-        <li><strong>Inverse-rank trend on broad genmatch sharpens dramatically at scale</strong> — from ~3 pp at T2 to ~14–16 pp within-method at T3. More PEFT capacity + longer training = more drift from BoolQ-optimal toward the broader cs170k mix.</li>
+        <li><strong>Inverse-rank trend on broad genmatch sharpens dramatically at scale</strong> — T2's within-method drop (LoRA 3.3 pp, DoRA 6.6) grows to T3's (LoRA 14 pp, DoRA 16). More PEFT capacity + longer training = more drift from BoolQ-optimal toward the broader cs170k mix.</li>
       </ol>
 
       <h3>Methodological lessons</h3>

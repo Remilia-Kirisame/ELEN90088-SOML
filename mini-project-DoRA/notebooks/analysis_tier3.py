@@ -55,9 +55,13 @@ print(f"T3: {len(t3_runs)} runs, {len(t3_cells)} cells")
 print(f"T2 cs170k: {len(t2_runs)} runs, {len(t2_cells)} cells")
 
 # Style convention — matches T2's analysis.py for cross-doc consistency.
+# SOLID = broad-parser genmatch (task accuracy); DASHED = likelihood (parser-format
+# diagnostic that diverges from task accuracy at T3, where the model has switched
+# to cs170k's true/false vocabulary).
 RANKS = [4, 8, 16]
 METHOD_COLORS = {"lora": "C0", "dora": "C1"}
-METRIC_STYLES = {"likelihood": "-", "genmatch": "--"}
+METRIC_STYLES = {"likelihood": "--", "genmatch": "-"}
+METRIC_LABELS = {"likelihood": "likelihood", "genmatch": "broad genmatch"}
 ZEROSHOT_GEN = 0.82  # Mistral-7B-Instruct zero-shot broad-genmatch on BoolQ dev (from tier2-baseline)
 
 # %% [markdown]
@@ -80,9 +84,9 @@ for method in ["lora", "dora"]:
             marker="o", capsize=3,
             color=METHOD_COLORS[method],
             linestyle=METRIC_STYLES[metric],
-            label=f"{method.upper()} ({metric})",
+            label=f"{method.upper()} ({METRIC_LABELS[metric]})",
         )
-ax.axhline(ZEROSHOT_GEN, color="grey", linewidth=0.8, linestyle="-.", label=f"zero-shot ({ZEROSHOT_GEN:.2f})")
+ax.axhline(ZEROSHOT_GEN, color="grey", linewidth=0.8, linestyle="-.", label=f"zero-shot broad-genmatch ({ZEROSHOT_GEN:.2f})")
 ax.axhline(0.5, color="grey", linewidth=0.5, linestyle=":", label="chance (0.5)")
 ax.set_title("Tier 3 cs170k (10k steps, n=4): rank sensitivity")
 ax.set_xlabel("rank r")

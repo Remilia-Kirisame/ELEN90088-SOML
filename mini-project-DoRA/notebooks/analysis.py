@@ -51,9 +51,13 @@ print(f"{len(runs)} runs, {len(cells)} cells")
 # %%
 RANKS = [4, 8, 16]
 # Convention used in both rank_sensitivity and format_adaptation: color encodes
-# method (LoRA blue, DoRA orange); linestyle encodes the metric variant.
+# method (LoRA blue, DoRA orange); linestyle encodes task-accuracy-vs-diagnostic.
+# SOLID = broad-parser genmatch (the canonical task-accuracy metric). DASHED =
+# likelihood OR strict-parser genmatch (parser/format diagnostics that diverge
+# from task accuracy when the model's output format shifts).
 METHOD_COLORS = {"lora": "C0", "dora": "C1"}
-METRIC_STYLES = {"likelihood": "-", "genmatch": "--"}
+METRIC_STYLES = {"likelihood": "--", "genmatch": "-"}
+METRIC_LABELS = {"likelihood": "likelihood", "genmatch": "broad genmatch"}
 fig, axes = plt.subplots(1, 2, figsize=(11, 4), sharey=True)
 for ax, trainset in zip(axes, ["boolq", "cs170k"]):
     for method in ["lora", "dora"]:
@@ -68,10 +72,10 @@ for ax, trainset in zip(axes, ["boolq", "cs170k"]):
                 marker="o", capsize=3,
                 color=METHOD_COLORS[method],
                 linestyle=METRIC_STYLES[metric],
-                label=f"{method.upper()} ({metric})",
+                label=f"{method.upper()} ({METRIC_LABELS[metric]})",
             )
     if trainset == "cs170k":
-        ax.axhline(0.82, color="grey", linewidth=0.8, linestyle="-.", label="zero-shot (~0.82)")
+        ax.axhline(0.82, color="grey", linewidth=0.8, linestyle="-.", label="zero-shot broad-genmatch (~0.82)")
     ax.set_title(f"trained on {trainset}")
     ax.set_xlabel("rank r")
     ax.set_xticks(RANKS)
@@ -92,8 +96,8 @@ if any(k[0] == "cs170k" and "genmatch_strict_mean" in cells[k] for k in cells):
     fig, ax = plt.subplots(figsize=(6.5, 4))
     for method in ["lora", "dora"]:
         for variant, label_suffix, style in [
-            ("genmatch", "broad", "-"),
-            ("genmatch_strict", "strict", "--"),
+            ("genmatch", "broad genmatch", "-"),
+            ("genmatch_strict", "strict genmatch", "--"),
         ]:
             ys, es = [], []
             for r in RANKS:
@@ -111,7 +115,7 @@ if any(k[0] == "cs170k" and "genmatch_strict_mean" in cells[k] for k in cells):
                 linestyle=style,
                 label=f"{method.upper()} ({label_suffix})",
             )
-    ax.axhline(0.82, color="grey", linewidth=0.8, linestyle="-.", label="zero-shot broad (~0.82)")
+    ax.axhline(0.82, color="grey", linewidth=0.8, linestyle="-.", label="zero-shot broad-genmatch (~0.82)")
     ax.axhline(0.5, color="grey", linewidth=0.5, linestyle=":", label="chance (0.5)")
     ax.set_title("cs170k: format-adaptation (strict) vs task accuracy (broad)")
     ax.set_xlabel("rank r")

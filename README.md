@@ -2,7 +2,7 @@
 
 Coursework repository for [ELEN90088 System Optimisation and Machine Learning](https://handbook.unimelb.edu.au/subjects/elen90088) at the University of Melbourne (2026).
 
-This repository collects my solutions, supporting notes, and the final project for the subject. Weekly exercises live under `Exercises/` (with my own notes and supporting materials under `Exercises/docs/`); the project brief and starter materials live under `Project-Description/`. The Project 2 (Hands-on LLMs) work is split across two folders: `Project-LLM/` holds the starter notebook scaffold (Parts 1–5), and `mini-project-DoRA/` holds the graded mini-project (Part 6) — a DoRA paper reproduction. See [mini-project-DoRA/README.md](./mini-project-DoRA/README.md) for the mini-project write-up and reproduce instructions.
+This repository collects my solutions, supporting notes, and the final project for the subject. Weekly exercises live under `Exercises/` (with my own notes and supporting materials under `Exercises/docs/`); the project brief and starter materials live under `Project-Description/`. The Project 2 (Hands-on LLMs) work is split across two folders: `Project-LLM/` holds the Parts 1–5 starter notebook together with the written report and oral slide deck, and `mini-project-DoRA/` holds the graded mini-project (Part 6) — a DoRA paper reproduction. See [Project-LLM/README.md](./Project-LLM/README.md) and [mini-project-DoRA/README.md](./mini-project-DoRA/README.md) for the respective write-ups and reproduce instructions.
 
 ---
 
@@ -10,50 +10,29 @@ This repository collects my solutions, supporting notes, and the final project f
 
 ```
 .
-├── Exercises/
-│   ├── SOML2026_Exercise_1.ipynb       # Exercise 1 — my solution
-│   ├── SOML2026_Exercise_1_Sol.ipynb   # Official solution (reference)
-│   ├── SOML2026_Exercise_2.ipynb       # Exercise 2 — my solution
-│   ├── SOML2026_Exercise_2.py          # Jupytext-paired script for Exercise 2
-│   ├── Zhiqi's Solution/               # Peer reference solution for Ex 2
+├── Exercises/                          # Weekly exercises — my solutions, notes, paired .py scripts
+│   ├── SOML2026_Exercise_{1,2,3}.ipynb # My solutions (Ex 2 & 3 also Jupytext-paired as .py)
+│   ├── Reference Solution/             # Official solutions (Ex 1 & 2)
+│   ├── Zhiqi's Solution/               # Peer reference solution (Ex 2)
 │   └── docs/                           # My notes and supporting materials
 │
-├── Project-Description/                # Teaching-team materials for the project
-│   ├── SOML_Project_26S1.md            # Overall project brief
-│   ├── Project_1_Learn_to_Optimise.md  # Option 1 — learn-to-optimise
-│   ├── Project_2_Hands-on_LLMs.md      # Option 2 — hands-on LLMs
-│   ├── SOML_LLM_project.ipynb          # Starter notebook (Option 2)
-│   ├── SOML_LLM_project_MacOS.yaml     # Conda env spec (macOS, optional)
-│   ├── SOML_LLM_project_Windows.yaml   # Conda env spec (Windows / CUDA, optional)
-│   └── oral-info.md                    # Oral assessment schedule + instructions
+├── Project-Description/                # Teaching-team project brief, starter notebook, oral schedule
+├── Project-LLM/                        # Project 2: Parts 1–5 starter notebook, written report, oral deck
+├── mini-project-DoRA/                  # Project 2 Part 6: graded DoRA reproduction (self-contained uv project)
 │
-├── Project-LLM/                        # Project 2 Parts 1–5: starter notebook scaffold
-│   ├── SOML_LLM_project.ipynb          # Working notebook (edited locally, run on HPC)
-│   └── Results-ipynb/                  # Outputs and write-ups for selected parts
-│
-├── mini-project-DoRA/                  # Project 2 Part 6: graded mini-project (DoRA reproduction)
-│   ├── src/dora_mini/                  # Importable Python package (data, models, train, eval, summarize)
-│   ├── scripts/                        # CLI entrypoints (gen_configs, train, evaluate, summarize_results)
-│   ├── configs/                        # 6 Tier-1 + 36 Tier-2 + 24 Tier-3 experiment YAMLs
-│   ├── results/                        # metrics.json per run + SUMMARY-tier{2,3}.md (per-tier deliverables) + SUMMARY.md (index)
-│   ├── figures/                        # Tier-2 in figures/; Tier-3 in figures/tier3/
-│   ├── notebooks/analysis.{py,ipynb}   # Jupytext-paired analysis (Tier 2 + a sibling analysis_tier3 for Tier 3)
-│   ├── tests/                          # pytest — 61 tests, no GPU needed
-│   ├── pyproject.toml                  # uv project (torch+cu124, transformers, peft, …)
-│   ├── DoRA_REFERENCE.md               # Upstream paper + commit pin
-│   └── README.md                       # Full reproduce instructions, headline findings
-│
-├── requirements.txt                    # pip requirements for the Exercises (mini-project uses uv)
+├── requirements.txt                    # pip deps for the Exercises (mini-project uses uv)
 ├── LICENSE.md                          # Usage notes (educational reference + upstream licenses)
 └── README.md
 ```
+
+The two project folders each have their own README with a full file-by-file map: [Project-LLM/README.md](./Project-LLM/README.md) and [mini-project-DoRA/README.md](./mini-project-DoRA/README.md).
 
 Progress:
 
 - [x] Exercise 1 — Convexity, linear models, logistic regression
 - [x] Exercise 2 — SVM, clustering (K-Means / GMM), DNN, VAE
-- [ ] Exercise 3
-- [x] Subject Project (Option 2 — Hands-on LLMs): starter notebook complete; mini-project (DoRA reproduction) results complete — Tier 2 (the canonical study, 36 runs + zero-shot) plus a separate Tier-3 enrichment (24 runs at 10k cs170k steps × 4 seeds). Per-tier deliverables under [`mini-project-DoRA/results/`](./mini-project-DoRA/results/) ([index](./mini-project-DoRA/results/SUMMARY.md), [Tier 2](./mini-project-DoRA/results/SUMMARY-tier2.md), [Tier 3](./mini-project-DoRA/results/SUMMARY-tier3.md)). Oral (28/29 May 2026) and written report (due 12 June) remain.
+- [x] Exercise 3 — Duality and the duality gap, KKT conditions, SVM (binary + importance-weighted), backpropagation
+- [x] Subject Project (Option 2 — Hands-on LLMs): starter notebook; mini-project (DoRA reproduction) results — Tier 2 (the canonical study, 36 runs + zero-shot) plus a separate Tier-3 enrichment (24 runs at 10k cs170k steps × 4 seeds).
 
 ---
 
@@ -91,12 +70,12 @@ Then open any notebook under `Exercises/` and run the cells top-to-bottom. In VS
 
 ### Project 2 (Hands-on LLMs)
 
-I run the subject project on the **University of Melbourne HPC (Spartan, via Open OnDemand)**. The work is split across two folders:
+I developed Project 2 locally and ran it on the **HPC (Spartan, via Open OnDemand)**. The work is split across two folders:
 
-- [`Project-LLM/`](./Project-LLM/) — Parts 1–5 starter notebook (`SOML_LLM_project.ipynb`), edited locally and executed on Spartan. The notebook reads `SPARTAN_PROJECT_DIR` and routes the Hugging Face / transformers / datasets caches under that path so model weights persist across sessions.
+- [`Project-LLM/`](./Project-LLM/) — the Parts 1–5 starter notebook (`SOML_LLM_project.ipynb`), plus the written **report** (`Report/`, including the compiled `main.pdf`) and the **oral slide deck** (`Oral/`). The notebook was edited locally and executed on Spartan, reading `SPARTAN_PROJECT_DIR` to route the Hugging Face / transformers / datasets caches under that path so model weights persisted across sessions. See [`Project-LLM/README.md`](./Project-LLM/README.md).
 - [`mini-project-DoRA/`](./mini-project-DoRA/) — Part 6 mini-project: a DoRA paper reproduction extended into a regime-contrast generalization study (Tier 2: 36 training runs + zero-shot baseline), with a separate Tier-3 enrichment at 10k cs170k steps × 4 seeds (24 additional runs). Self-contained `uv` project with its own dependencies, scripts, tests, configs, results, and figures. See [`mini-project-DoRA/README.md`](./mini-project-DoRA/README.md) for the full story and reproduce instructions.
 
-See [`Project-Description/Project_2_Hands-on_LLMs.md`](./Project-Description/Project_2_Hands-on_LLMs.md) for the project brief and [`Project-Description/oral-info.md`](./Project-Description/oral-info.md) for the oral assessment schedule. The two `.yaml` files in `Project-Description/` are conda env specs provided by the teaching team for students who prefer to run Parts 1–5 locally; I don't use them.
+See [`Project-Description/Project_2_Hands-on_LLMs.md`](./Project-Description/Project_2_Hands-on_LLMs.md) for the project brief and [`Project-Description/oral-info.md`](./Project-Description/oral-info.md) for the oral assessment schedule. The two `.yaml` files in `Project-Description/` are conda env specs provided by the teaching team for students who prefer to run Parts 1–5 locally; I didn't use them.
 
 ---
 
@@ -108,6 +87,7 @@ Listed in [`requirements.txt`](./requirements.txt):
 | -------------- | -------------------------------------------- |
 | `numpy`        | Numerical computing, linear algebra          |
 | `scipy`        | Scientific computing (stats, distributions)  |
+| `sympy`        | Symbolic mathematics (duality / KKT work)    |
 | `pandas`       | Data manipulation                            |
 | `matplotlib`   | Plotting                                     |
 | `seaborn`      | Statistical visualisation                    |
